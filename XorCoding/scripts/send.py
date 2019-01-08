@@ -50,7 +50,7 @@ def main():
     pkt1 =  Ether(src=get_if_hwaddr(iface1), dst='ff:ff:ff:ff:ff:ff')
     pkt1 = pkt1 / P4code(Generation=0, Generation_Size=2) / message1
     sendp(pkt1, iface=iface1, verbose=False)
-    pkt.show2();
+    pkt1.show2();
 
 
 
