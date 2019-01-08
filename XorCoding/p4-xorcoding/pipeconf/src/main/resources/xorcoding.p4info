@@ -1,0 +1,377 @@
+tables {
+  preamble {
+    id: 33606914
+    name: "c_ingress.t_l2_fwd"
+    alias: "t_l2_fwd"
+  }
+  match_fields {
+    id: 1
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 2
+    name: "hdr.ethernet.dst_addr"
+    bitwidth: 48
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 3
+    name: "hdr.ethernet.src_addr"
+    bitwidth: 48
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 4
+    name: "hdr.ethernet.ether_type"
+    bitwidth: 16
+    match_type: TERNARY
+  }
+  action_refs {
+    id: 16831479
+  }
+  action_refs {
+    id: 16822540
+  }
+  action_refs {
+    id: 16808599
+  }
+  action_refs {
+    id: 16800567
+  }
+  direct_resource_ids: 318778805
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+tables {
+  preamble {
+    id: 33577661
+    name: "c_ingress.t_unicast"
+    alias: "t_unicast"
+  }
+  match_fields {
+    id: 1
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16831479
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+tables {
+  preamble {
+    id: 33602027
+    name: "c_ingress.table_multicast"
+    alias: "table_multicast"
+  }
+  match_fields {
+    id: 1
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16806042
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+tables {
+  preamble {
+    id: 33556791
+    name: "c_ingress.do_coding_table"
+    alias: "do_coding_table"
+  }
+  match_fields {
+    id: 1
+    name: "meta.coding_metadata.do_coding"
+    bitwidth: 8
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16815557
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+tables {
+  preamble {
+    id: 33600857
+    name: "c_ingress.do_decoding_table"
+    alias: "do_decoding_table"
+  }
+  match_fields {
+    id: 1
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.coding.type"
+    bitwidth: 8
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16815724
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+tables {
+  preamble {
+    id: 33560158
+    name: "c_ingress.store_table"
+    alias: "store_table"
+  }
+  match_fields {
+    id: 1
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16804913
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+  idle_timeout_behavior: NO_TIMEOUT
+}
+actions {
+  preamble {
+    id: 16800567
+    name: "NoAction"
+    alias: "NoAction"
+  }
+}
+actions {
+  preamble {
+    id: 16822540
+    name: "c_ingress.send_to_cpu"
+    alias: "send_to_cpu"
+  }
+}
+actions {
+  preamble {
+    id: 16831479
+    name: "c_ingress.set_out_port"
+    alias: "set_out_port"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 16806042
+    name: "c_ingress.action_multicast"
+    alias: "action_multicast"
+  }
+  params {
+    id: 1
+    name: "group"
+    bitwidth: 16
+  }
+}
+actions {
+  preamble {
+    id: 16815557
+    name: "c_ingress.coding_action"
+    alias: "coding_action"
+  }
+  params {
+    id: 1
+    name: "coding_flag"
+    bitwidth: 8
+  }
+}
+actions {
+  preamble {
+    id: 16815724
+    name: "c_ingress.action_decoding"
+    alias: "action_decoding"
+  }
+  params {
+    id: 1
+    name: "decoding_flag"
+    bitwidth: 8
+  }
+}
+actions {
+  preamble {
+    id: 16804913
+    name: "c_ingress.store_action"
+    alias: "store_action"
+  }
+  params {
+    id: 1
+    name: "store_flag"
+    bitwidth: 8
+  }
+}
+actions {
+  preamble {
+    id: 16808599
+    name: "c_ingress._drop"
+    alias: "_drop"
+  }
+}
+counters {
+  preamble {
+    id: 302003196
+    name: "c_ingress.tx_port_counter"
+    alias: "tx_port_counter"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 255
+}
+counters {
+  preamble {
+    id: 302045227
+    name: "c_ingress.rx_port_counter"
+    alias: "rx_port_counter"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 255
+}
+direct_counters {
+  preamble {
+    id: 318778805
+    name: "c_ingress.l2_fwd_counter"
+    alias: "l2_fwd_counter"
+  }
+  spec {
+    unit: BOTH
+  }
+  direct_table_id: 33606914
+}
+controller_packet_metadata {
+  preamble {
+    id: 67146229
+    name: "packet_in"
+    annotations: "@controller_header(\"packet_in\")"
+  }
+  metadata {
+    id: 1
+    name: "ingress_port"
+    bitwidth: 9
+  }
+}
+controller_packet_metadata {
+  preamble {
+    id: 67121543
+    name: "packet_out"
+    annotations: "@controller_header(\"packet_out\")"
+  }
+  metadata {
+    id: 1
+    name: "egress_port"
+    bitwidth: 9
+  }
+}
+registers {
+  preamble {
+    id: 369110030
+    name: "c_ingress.payload_buffer"
+    alias: "payload_buffer"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 8
+      }
+    }
+  }
+  size: 4
+}
+registers {
+  preamble {
+    id: 369130107
+    name: "c_ingress.generationOffsetBuffer"
+    alias: "generationOffsetBuffer"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 32
+      }
+    }
+  }
+  size: 4
+}
+registers {
+  preamble {
+    id: 369163571
+    name: "c_ingress.starting_index_of_generation_buffer"
+    alias: "starting_index_of_generation_buffer"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 32
+      }
+    }
+  }
+  size: 4
+}
+registers {
+  preamble {
+    id: 369161489
+    name: "c_ingress.freedSpace"
+    alias: "freedSpace"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 32
+      }
+    }
+  }
+  size: 4
+}
+registers {
+  preamble {
+    id: 369120823
+    name: "c_ingress.numberOfStoredPackets"
+    alias: "numberOfStoredPackets"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 32
+      }
+    }
+  }
+  size: 1
+}
+type_info {
+}
