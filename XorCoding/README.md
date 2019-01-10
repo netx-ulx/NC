@@ -15,6 +15,8 @@ We have one host which generates and sends packets, ```h1``` , and two destinati
 The switches in this network don't all have the same behaviour. We have ```s1```, ```s2``` and ```s4``` which multicasts all the packets received to the remaining ports. Switch ```s3``` performs the coding process and then forwards the packet. Meanwhile ```s5``` and ```s6``` do the decoding process and then forwards the packet to the destination hosts.
 
 ## xorcoding.p4 (I would add the path to the program)
+The program can be found in the following path ```XorCoding/p4-xorcoding/pipeconf/src/main/resources/xorcoding.p4```.
+
 This coding protocol makes use of a custom header and incorporates the packet's payload in it. It is defined as following:
 ```
 header coding_hdr_t {
@@ -30,11 +32,11 @@ header coding_hdr_t {
 }
 ```
 
-This program describes a pipeline implementing a simple coding scheme, Exclusive-OR (XOR) coding. It implements two forwarding behaviours by inserting entries in two different tables of xorcoding.p4, namely ```t_unicast``` and ```table_multicast```: (for consistency, use the same notation to name things, so tab_unicast and tab_multicast for example. I would avoid t_sth since that suffix/prefix is usually used for type definition ).
+This program describes a pipeline implementing a simple coding scheme, Exclusive-OR (XOR) coding. It implements two forwarding behaviours by inserting entries in two different tables of xorcoding.p4, namely ```tab_unicast``` and ```tab_multicast```:
 
- * ```t_unicast```: this table is used to implement the forwarding to one port behaviour. It matches on the ingress port of the switch and provides the ```set_out_port``` action, which provides a single port to which the packet will be forwarded to.
+ * ```tab_unicast```: this table is used to implement the forwarding to one port behaviour. It matches on the ingress port of the switch and provides the ```set_out_port``` action, which provides a single port to which the packet will be forwarded to.
 
- * ```table_multicast```: this table also implements a forwarding behaviour, matching on the same parameter as the above. Only in this case the ```action_multicast``` action is provided. This action provides a multicast group containing a set of ports to which the packet should be forwarded to.
+ * ```tab_multicast```: this table also implements a forwarding behaviour, matching on the same parameter as the above. Only in this case the ```action_multicast``` action is provided. This action provides a multicast group containing a set of ports to which the packet should be forwarded to.
 
 Regarding the coding process itself, the p4 program can be seen as having three core modules. They are implemented by manipulating metadata and by inserting entries into three different tables ```store_table```, ```do_coding_table``` and ```do_decoding_table```. All tables match on the ingress port, except for the ```do_decoding_table``` that also matches on the type of the packet. 
 The action provided by each table sets the respective metadata fields values ```store_flag```, ```do_coding```, and ```do_decoding``` to 1. This is done so that when the packet reaches the control block, the processing applied changes depending on the rules installed in the switches.   
@@ -112,11 +114,17 @@ Now that everything is in place we can begin by starting ONOS and Mininet.
     $ onos localhost
     ```
     
-    In ONOS CLI command prompt you will be able to see the apps installed and activate other apps if you wish. For a list of possible commands that you can use here, type: (in my opinion, here it would be better to write down how to check if your onos app has been detected correctly)
+    In ONOS CLI command prompt you will be able to see the apps installed and activate other apps if you wish. For a list of possible commands that you can use here, type:
     
     ```
     onos> help onos
     ```
+    To check if our apps were installed correctly, namely ```p4xorcoding.pipeconf``` and ```p4xorcoding.xorcoding```, enter the command prompt:
+    
+    ```
+    onos> apps -a -s
+    ```
+    Both of the apps should appear in the list presented
 
 3. On a third terminal window, run Mininet to set up a butterfly topology of BMv2 devices.
     
@@ -165,7 +173,7 @@ On the terminal window of ```s4 ```the following will show up:
 ![Image](images/receiveSwitch.PNG "butterfly")
 
 Notice how the payload is different? That's because it is the result of XOR-ing ```a``` and ```b```. When ```s4``` receives a packet, it only receives one because
-the two that were originally sent were already coded and sent as a single packet by ```s3```. (say also sth about the header field "type" which indicates this is a coded packet ;))
+the two that were originally sent were already coded and sent as a single packet by ```s3```. You can also look at the header field ```type``` and confirm that its value is 2, meaning that the packet is indeed coded.
 
 Finally in the destination nodes you should see the original packets obtained by the decoding process performed by ```s5``` and ```s6```.
 The terminal windows of ```h2``` and ```h3``` will look like this, respectively:
