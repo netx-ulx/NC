@@ -1,6 +1,6 @@
 P4-XOR Coding Switch
 =====
-This project consists of a butterfly network with switches, controled by ONOS, capable of XOR-ing two packets together and decoding them, a basic coding technique. This is done through a P4 program which is installed on the switches of this network.
+This project consists of a butterfly network with switches, controlled by ONOS, capable of XOR-ing two packets together and decoding them, a basic coding technique. This is done through a P4 program which is installed on the switches of this network.
 
 ## The Butterfly Network
 ![Image](images/network.png "butterfly")
@@ -14,7 +14,7 @@ We have one host which generates and sends packets, ```h1``` , and two destinati
 
 The switches in this network don't all have the same behaviour. We have ```s1```, ```s2``` and ```s4``` which multicasts all the packets received to the remaining ports. Switch ```s3``` performs the coding process and then forwards the packet. Meanwhile ```s5``` and ```s6``` do the decoding process and then forwards the packet to the destination hosts.
 
-## xorcoding.p4
+## xorcoding.p4 (I would add the path to the program)
 This coding protocol makes use of a custom header and incorporates the packet's payload in it. It is defined as following:
 ```
 header coding_hdr_t {
@@ -30,7 +30,7 @@ header coding_hdr_t {
 }
 ```
 
-This program describes a pipeline implementing a simple coding scheme, Exclusive-OR (XOR) coding. It implements two forwarding behaviours by inserting entries in two different tables of xorcoding.p4, namely ```t_unicast``` and ```table_multicast```:
+This program describes a pipeline implementing a simple coding scheme, Exclusive-OR (XOR) coding. It implements two forwarding behaviours by inserting entries in two different tables of xorcoding.p4, namely ```t_unicast``` and ```table_multicast```: (for consistency, use the same notation to name things, so tab_unicast and tab_multicast for example. I would avoid t_sth since that suffix/prefix is usually used for type definition ).
 
  * ```t_unicast```: this table is used to implement the forwarding to one port behaviour. It matches on the ingress port of the switch and provides the ```set_out_port``` action, which provides a single port to which the packet will be forwarded to.
 
@@ -112,7 +112,7 @@ Now that everything is in place we can begin by starting ONOS and Mininet.
     $ onos localhost
     ```
     
-    In ONOS CLI command prompt you will be able to see the apps installed and activate other apps if you wish. For a list of possible commands that you can use here, type:
+    In ONOS CLI command prompt you will be able to see the apps installed and activate other apps if you wish. For a list of possible commands that you can use here, type: (in my opinion, here it would be better to write down how to check if your onos app has been detected correctly)
     
     ```
     onos> help onos
@@ -135,7 +135,7 @@ the capabilities of the XorCoding app.
     xterm h1 h2 h3 s4
     ```
     Four additional windows will pop-up, one for each host in the network.
-2. In the terminal window of the destinations hosts, ```h2``` and ```h3```, type:
+2. In the terminal window of the destinations hosts, ```h2``` and ```h3```, type: (you have to make all the scripts executable before, e.g., chmod +x receive.py)
     ```
     cd scripts
     ./receive.py
@@ -165,7 +165,7 @@ On the terminal window of ```s4 ```the following will show up:
 ![Image](images/receiveSwitch.PNG "butterfly")
 
 Notice how the payload is different? That's because it is the result of XOR-ing ```a``` and ```b```. When ```s4``` receives a packet, it only receives one because
-the two that were originally sent were already coded and sent as a single packet by ```s3```.
+the two that were originally sent were already coded and sent as a single packet by ```s3```. (say also sth about the header field "type" which indicates this is a coded packet ;))
 
 Finally in the destination nodes you should see the original packets obtained by the decoding process performed by ```s5``` and ```s6```.
 The terminal windows of ```h2``` and ```h3``` will look like this, respectively:
