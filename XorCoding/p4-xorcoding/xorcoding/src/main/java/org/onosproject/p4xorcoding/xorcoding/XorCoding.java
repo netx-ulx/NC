@@ -202,7 +202,7 @@ public class XorCoding {
         PiActionParam codeFlagParam = new PiActionParam(codeFlagParamId, (short) codeFlag);
 
 
-        PiActionId ingressActionId = PiActionId.of("c_ingress.coding_action");
+        PiActionId ingressActionId = PiActionId.of("c_ingress.action_coding");
         PiAction action = PiAction.builder()
                 .withId(ingressActionId)
                 .withParameter(codeFlagParam)
@@ -243,7 +243,7 @@ public class XorCoding {
     private void insertUnicastRule(DeviceId switchId, PortNumber inPort, PortNumber outPort) {
 
 
-        PiTableId unicastIngressTableId = PiTableId.of("c_ingress.t_unicast");
+        PiTableId unicastIngressTableId = PiTableId.of("c_ingress.tab_unicast");
 
         PiMatchFieldId ingressPortMatchFieldId = PiMatchFieldId.of("standard_metadata.ingress_port");
 
@@ -278,7 +278,7 @@ public class XorCoding {
         groupService.addGroup(groupDescription);
 
 
-        PiTableId multicastIngressTableId = PiTableId.of("c_ingress.table_multicast");
+        PiTableId multicastIngressTableId = PiTableId.of("c_ingress.tab_multicast");
 
 
         PiMatchFieldId ingressPortMatchFieldId = PiMatchFieldId.of("standard_metadata.ingress_port");
