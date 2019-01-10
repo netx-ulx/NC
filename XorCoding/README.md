@@ -14,7 +14,7 @@ We have one host which generates and sends packets, ```h1``` , and two destinati
 
 The switches in this network don't all have the same behaviour. We have ```s1```, ```s2``` and ```s4``` which multicasts all the packets received to the remaining ports. Switch ```s3``` performs the coding process and then forwards the packet. Meanwhile ```s5``` and ```s6``` do the decoding process and then forwards the packet to the destination hosts.
 
-## xorcoding.p4 (I would add the path to the program)
+## xorcoding.p4
 The program can be found in the following path ```XorCoding/p4-xorcoding/pipeconf/src/main/resources/xorcoding.p4```.
 
 This coding protocol makes use of a custom header and incorporates the packet's payload in it. It is defined as following:
