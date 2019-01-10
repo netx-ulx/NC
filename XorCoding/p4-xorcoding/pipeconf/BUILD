@@ -21,6 +21,6 @@ onos_app(
     required_apps = [
         "org.onosproject.drivers.p4runtime",
     ],
-    title = "P4 Tutorial Pipeconf",
+    title = "P4 XorCoding Pipeconf",
     url = "http://onosproject.org",
 )

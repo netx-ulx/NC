@@ -18,6 +18,6 @@ onos_app(
     required_apps = [
         "org.onosproject.p4xorcoding.pipeconf",
     ],
-    title = "MyTunnel Demo App",
+    title = "XorCoding App",
     url = "http://onosproject.org",
 )

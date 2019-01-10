@@ -16,7 +16,7 @@ BUNDLES = [
 
 onos_app (
     app_name = 'org.onosproject.p4xorcoding.pipeconf',
-    title = 'P4 Tutorial Pipeconf',
+    title = 'P4 XorCoding Pipeconf',
     category = 'Pipeconf',
     url = 'http://onosproject.org',
     description = 'Provides pipeconf for the ONOS-P4 Tutorial',

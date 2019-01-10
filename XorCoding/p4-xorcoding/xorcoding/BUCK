@@ -13,7 +13,7 @@ BUNDLES = [
 
 onos_app (
     app_name = 'org.onosproject.p4xorcoding.xorcoding',
-    title = 'MyTunnel Demo App',
+    title = 'XorCoding App',
     category = 'Traffic Engineering',
     url = 'http://onosproject.org',
     description = 'Provides forwarding between each pair of hosts via MyTunnel protocol',
