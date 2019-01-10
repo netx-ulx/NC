@@ -46,9 +46,9 @@ tables {
 }
 tables {
   preamble {
-    id: 33577661
-    name: "c_ingress.t_unicast"
-    alias: "t_unicast"
+    id: 33586811
+    name: "c_ingress.tab_unicast"
+    alias: "tab_unicast"
   }
   match_fields {
     id: 1
@@ -68,9 +68,9 @@ tables {
 }
 tables {
   preamble {
-    id: 33602027
-    name: "c_ingress.table_multicast"
-    alias: "table_multicast"
+    id: 33597855
+    name: "c_ingress.tab_multicast"
+    alias: "tab_multicast"
   }
   match_fields {
     id: 1
@@ -101,7 +101,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 16815557
+    id: 16809959
   }
   action_refs {
     id: 16800567
@@ -200,9 +200,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16815557
-    name: "c_ingress.coding_action"
-    alias: "coding_action"
+    id: 16809959
+    name: "c_ingress.action_coding"
+    alias: "action_coding"
   }
   params {
     id: 1

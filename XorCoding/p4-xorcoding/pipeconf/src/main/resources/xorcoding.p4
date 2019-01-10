@@ -175,7 +175,7 @@ control c_ingress(inout headers_t hdr,
         standard_metadata.mcast_grp = group;
     }
 
-    action coding_action(bit<8> coding_flag) {
+    action action_coding(bit<8> coding_flag) {
         meta.coding_metadata.do_coding = coding_flag;
         hdr.coding.type = 2;
     }
@@ -212,7 +212,7 @@ control c_ingress(inout headers_t hdr,
         counters = l2_fwd_counter;
     }
 
-    table t_unicast {
+    table tab_unicast {
         key = {
             standard_metadata.ingress_port: exact;
         }
@@ -222,7 +222,7 @@ control c_ingress(inout headers_t hdr,
         size = 1024;
     }
 
-    table table_multicast{
+    table tab_multicast{
         key = {
             standard_metadata.ingress_port : exact;
          }
@@ -239,7 +239,7 @@ control c_ingress(inout headers_t hdr,
             meta.coding_metadata.do_coding: exact;
         }
         actions = {
-            coding_action;
+            action_coding;
         }
         size = 1024;
     }
@@ -362,7 +362,7 @@ control c_ingress(inout headers_t hdr,
                         }
 
                         hdr.coding.type = 2;
-                        t_unicast.apply();
+                        tab_unicast.apply();
                     }
                 }
                 //This is block is responsible for decoding
@@ -375,12 +375,12 @@ control c_ingress(inout headers_t hdr,
                         payload_buffer.read(payload1, fetch_index);
                         hdr.coding.payload = hdr.coding.payload ^ payload1;
                     }
-                    t_unicast.apply();
+                    tab_unicast.apply();
                 }
                 else
                 {
-                    table_multicast.apply();
-                    t_unicast.apply();
+                    tab_multicast.apply();
+                    tab_unicast.apply();
                 }
 
             }
