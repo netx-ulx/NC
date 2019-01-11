@@ -48,13 +48,14 @@ Once a switch is added to the network flow rules are installed on it.
  Depending on the switch, the app will install different rules to perform forwarding, buffering, coding and decoding behaviours.
 
 ## send.py, receive.py and receiveSwitch.py
-There are three python scripts that make use of the Scapy package with the purpose to generate, send and receive packets.
+There are four python scripts that make use of the Scapy package with the purpose to generate, send and receive packets.
 They work as follows:
 
  * ```send.py```, executes by entering the command prompt ```./send.py "payload1" "payload2" ```, the host will send two packets with the respective indicated payloads
  * ```receive.py```, works by entering the command prompt ```./receive.py```, the host will wait for any incoming packet and will show the packet when it arrives.
  * ```receiveSwitch.py```, uses the command prompt ```./receiveSwitch.py "switch" "port"```, the switch specified will sniff packets on the provided port.
-
+ * ```sendMultipleGenerations.py```, executes by entering the command prompt ```./sendMultipleGenerations.py```, the host will send multiple packets belonging to different generations if the user wishes to.
+ 
 Setting up
 =====
 To run the project you will need to download and run the following VM (in .ova format). It has the tools needed for this project.
@@ -166,6 +167,7 @@ the capabilities of the XorCoding app.
 
 If all went well, on the terminal of ```h1``` you should see the two packets being sent across the network, something like this will show up:
 
+
 ![Image](images/sender.PNG "butterfly")
 
 On the terminal window of ```s4 ```the following will show up:
@@ -185,11 +187,66 @@ The terminal windows of ```h2``` and ```h3``` will look like this, respectively:
 And that concludes this particular simple example. By playing with the ```send.py``` script you can change some parameters,
 like the generation, generation size or even send more packets at the same time.
 
-Visualization of the exercise
-==
+#Visualization of the exercise
+
 Below you will find an animation exemplifying the exercise.
 
 ![](animations/butterflyAnimation.gif)
+
+#XorCoding with multiple generations
+This time we will run a more complex example. We are going to send packets belonging to different generations.
+To do so repeat steps 1 to 3 from the previous example.
+
+Now on the terminal window of ```h1``` instead of using the ```send.py``` script, execute this one ```sendMultipleGenerations.py```
+You will then be presented with how many generations you are going to send and the size of each one. Meaning the packets being sent across
+the network will be the sum of size of each generation.
+
+For the sake of this example, let's choose to send ```3``` generations with the first two having size ```2``` and the third one size ```4```.
+Your terminal should look like this for now:
+
+![Image](images/1_send_multiple.PNG "butterfly")
+
+Next, it's time to start sending the packets. Choose the generation to which you wish for the packet to belong to and its payload.
+Anything will do. We will be sending 8 packets in total, so let's do the following sequence:
+    
+    1. First Packet   -> Generation: 0; Payload: a
+    2. Second Packet  -> Generation: 1; Payload: b
+    
+Let's stop here for a bit and look at the terminals of ```s4```, ```h2``` and ```h3```. They should look like this:
+
+![Image](images/2_send_multiple.PNG "butterfly")
+
+![Image](images/3_send_multiple.PNG "butterfly")
+
+![Image](images/4_send_multiple.PNG "butterfly")
+
+Host ```h2``` received ```a``` but not ```b``` and host ```h3``` received ```b``` but not ```a```. Moreover, ```s4``` has not received a packet of any kind.
+This is the result of the packets belonging to two different generations, as such they were not coded and are waiting in
+```s3```. Now let's keep going and send the following two packets:
+
+    3. Third Packet   -> Generation: 1; Payload: c
+    4. Fourth Packet  -> Generation: 0; Payload: d
+
+Let's check those terminals again. As you can see, ```s4``` received two coded packets, the result of ```a xor d``` and ```b xor c``` .
+And both the hosts got both the newly packets sent and the ones which were missing. Your terminals should look like this:
+
+![Image](images/5_send_multiple.PNG "butterfly")
+
+![Image](images/6_send_multiple.PNG "butterfly")
+
+![Image](images/7_send_multiple.PNG "butterfly")
+
+Finally, for the last part, send the remaining four packets:
+    
+    5. Fifth Packet   -> Generation: 2; Payload: e
+    6. Sixth Packet   -> Generation: 2; Payload: f
+    7. Seventh Packet -> Generation: 2; Payload: g
+    8. Eighth Packet  -> Generation: 2; Payload: h
+    
+If you check ```s4``` you should see that it has received a total of 4 coded packets. While ```h2``` and ```h3``` have received all 8 packets, not in the same order, but with the correct payload.
+
+This concludes this particular example to show off the P4 program capability to handle packets belonging to different generations.
+    
 
 Additional Notes
 ==
