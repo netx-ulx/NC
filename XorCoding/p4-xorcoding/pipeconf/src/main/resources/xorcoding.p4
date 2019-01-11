@@ -53,8 +53,8 @@ header coding_hdr_t {
 
 // Metadata to dictate which actions each switch does: Coding, Decoding or Storing payloads
 struct coding_metadata_t {
-    bit<8>  do_coding;
-    bit<8>  do_decoding;
+    bit<8>  coding_flag;
+    bit<8>  decoding_flag;
     bit<8>  store_flag;
 }
 
@@ -171,20 +171,20 @@ control c_ingress(inout headers_t hdr,
         standard_metadata.egress_spec = port;
     }
 
-    action action_multicast(bit<16> group) {
+    action multicast(bit<16> group) {
         standard_metadata.mcast_grp = group;
     }
 
-    action action_coding(bit<8> coding_flag) {
-        meta.coding_metadata.do_coding = coding_flag;
+    action coding(bit<8> coding_flag) {
+        meta.coding_metadata.coding_flag = coding_flag;
         hdr.coding.type = 2;
     }
 
-    action action_decoding(bit<8> decoding_flag) {
-        meta.coding_metadata.do_decoding = decoding_flag;
+    action decoding(bit<8> decoding_flag) {
+        meta.coding_metadata.decoding_flag = decoding_flag;
     }
 
-    action store_action(bit<8> store_flag) {
+    action store(bit<8> store_flag) {
         meta.coding_metadata.store_flag = store_flag;
     }
     action _drop() {
@@ -192,10 +192,10 @@ control c_ingress(inout headers_t hdr,
     }
 
     // Table counter used to count packets and bytes matched by each entry of
-    // t_l2_fwd table.
+    // tab_l2_fwd table.
     direct_counter(CounterType.packets_and_bytes) l2_fwd_counter;
 
-    table t_l2_fwd {
+    table tab_l2_fwd {
         key = {
             standard_metadata.ingress_port  : ternary;
             hdr.ethernet.dst_addr           : ternary;
@@ -227,40 +227,40 @@ control c_ingress(inout headers_t hdr,
             standard_metadata.ingress_port : exact;
          }
          actions = {
-            action_multicast;
+            multicast;
          }
          size = 1024;
     }
 
     //The next 3 following tables are meant to manipulate the metadata fields,
     //so that the switch takes different actions depending on the metadata values
-    table do_coding_table {
+    table tab_coding {
         key = {
-            meta.coding_metadata.do_coding: exact;
+            meta.coding_metadata.coding_flag: exact;
         }
         actions = {
-            action_coding;
+            coding;
         }
         size = 1024;
     }
 
-    table do_decoding_table {
+    table tab_decoding {
         key = {
             standard_metadata.ingress_port: exact;
             hdr.coding.type: exact;
         }
         actions = {
-            action_decoding;
+            decoding;
         }
         size = 1024;
     }
 
-    table store_table {
+    table tab_store {
         key = {
               standard_metadata.ingress_port: exact;
         }
         actions = {
-            store_action;
+            store;
         }
         size = 1024;
     }
@@ -276,9 +276,9 @@ control c_ingress(inout headers_t hdr,
             hdr.packet_out.setInvalid();
         } else {
             // Packet received from data plane port.
-            // Applies table t_l2_fwd to the packet.
-            if (t_l2_fwd.apply().hit) {
-                // Packet hit an entry in t_l2_fwd table. A forwarding action
+            // Applies table tab_l2_fwd to the packet.
+            if (tab_l2_fwd.apply().hit) {
+                // Packet hit an entry in tab_l2_fwd table. A forwarding action
                 // has already been taken. No need to apply other tables, exit
                 // this control block.
                 return;
@@ -286,9 +286,9 @@ control c_ingress(inout headers_t hdr,
 
             if(hdr.coding.isValid()) {
                 //Apply all 3 tables to allocate the proper metadata values
-                do_coding_table.apply();
-                do_decoding_table.apply();
-                store_table.apply();
+                tab_coding.apply();
+                tab_decoding.apply();
+                tab_store.apply();
 
                 //Instantiation of variables that will be needed
                 bit<32> gen_index = 0;
@@ -332,7 +332,7 @@ control c_ingress(inout headers_t hdr,
                     generationOffsetBuffer.write(gen, gen_index+1);
                 }
                 //This is block is responsible for coding or xoring two packets together
-                if(meta.coding_metadata.do_coding == 1) {
+                if(meta.coding_metadata.coding_flag == 1) {
                     generationOffsetBuffer.read(gen_index, gen);
                     starting_index_of_generation_buffer.read(starting_index_of_generation, gen);
 
@@ -366,7 +366,7 @@ control c_ingress(inout headers_t hdr,
                     }
                 }
                 //This is block is responsible for decoding
-                else if(meta.coding_metadata.do_decoding == 1) {
+                else if(meta.coding_metadata.decoding_flag == 1) {
                     generationOffsetBuffer.read(gen_index, gen);
                     starting_index_of_generation_buffer.read(starting_index_of_generation, gen);
                     if(gen_index >= starting_index_of_generation)   {

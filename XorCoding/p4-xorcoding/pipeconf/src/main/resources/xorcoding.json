@@ -105,8 +105,8 @@
       "name" : "coding_metadata_t",
       "id" : 6,
       "fields" : [
-        ["do_coding", 8, false],
-        ["do_decoding", 8, false],
+        ["coding_flag", 8, false],
+        ["decoding_flag", 8, false],
         ["store_flag", 8, false]
       ]
     }
@@ -333,7 +333,7 @@
       "name" : "c_ingress.l2_fwd_counter",
       "id" : 2,
       "is_direct" : true,
-      "binding" : "c_ingress.t_l2_fwd",
+      "binding" : "c_ingress.tab_l2_fwd",
       "source_info" : {
         "filename" : "xorcoding.p4",
         "line" : 196,
@@ -566,7 +566,7 @@
       ]
     },
     {
-      "name" : "c_ingress.action_multicast",
+      "name" : "c_ingress.multicast",
       "id" : 9,
       "runtime_data" : [
         {
@@ -597,7 +597,7 @@
       ]
     },
     {
-      "name" : "c_ingress.action_coding",
+      "name" : "c_ingress.coding",
       "id" : 10,
       "runtime_data" : [
         {
@@ -611,7 +611,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["userMetadata.coding_metadata", "do_coding"]
+              "value" : ["userMetadata.coding_metadata", "coding_flag"]
             },
             {
               "type" : "runtime_data",
@@ -622,7 +622,7 @@
             "filename" : "xorcoding.p4",
             "line" : 179,
             "column" : 8,
-            "source_fragment" : "meta.coding_metadata.do_coding = coding_flag"
+            "source_fragment" : "meta.coding_metadata.coding_flag = coding_flag"
           }
         },
         {
@@ -647,7 +647,7 @@
       ]
     },
     {
-      "name" : "c_ingress.action_decoding",
+      "name" : "c_ingress.decoding",
       "id" : 11,
       "runtime_data" : [
         {
@@ -661,7 +661,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["userMetadata.coding_metadata", "do_decoding"]
+              "value" : ["userMetadata.coding_metadata", "decoding_flag"]
             },
             {
               "type" : "runtime_data",
@@ -672,13 +672,13 @@
             "filename" : "xorcoding.p4",
             "line" : 184,
             "column" : 8,
-            "source_fragment" : "meta.coding_metadata.do_decoding = decoding_flag"
+            "source_fragment" : "meta.coding_metadata.decoding_flag = decoding_flag"
           }
         }
       ]
     },
     {
-      "name" : "c_ingress.store_action",
+      "name" : "c_ingress.store",
       "id" : 12,
       "runtime_data" : [
         {
@@ -2498,13 +2498,13 @@
           }
         },
         {
-          "name" : "c_ingress.t_l2_fwd",
+          "name" : "c_ingress.tab_l2_fwd",
           "id" : 2,
           "source_info" : {
             "filename" : "xorcoding.p4",
             "line" : 198,
             "column" : 10,
-            "source_fragment" : "t_l2_fwd"
+            "source_fragment" : "tab_l2_fwd"
           },
           "key" : [
             {
@@ -2622,19 +2622,19 @@
           }
         },
         {
-          "name" : "c_ingress.do_coding_table",
+          "name" : "c_ingress.tab_coding",
           "id" : 6,
           "source_info" : {
             "filename" : "xorcoding.p4",
             "line" : 237,
             "column" : 10,
-            "source_fragment" : "do_coding_table"
+            "source_fragment" : "tab_coding"
           },
           "key" : [
             {
               "match_type" : "exact",
-              "name" : "meta.coding_metadata.do_coding",
-              "target" : ["userMetadata.coding_metadata", "do_coding"],
+              "name" : "meta.coding_metadata.coding_flag",
+              "target" : ["userMetadata.coding_metadata", "coding_flag"],
               "mask" : null
             }
           ],
@@ -2645,11 +2645,11 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [10, 3],
-          "actions" : ["c_ingress.action_coding", "NoAction"],
-          "base_default_next" : "c_ingress.do_decoding_table",
+          "actions" : ["c_ingress.coding", "NoAction"],
+          "base_default_next" : "c_ingress.tab_decoding",
           "next_tables" : {
-            "c_ingress.action_coding" : "c_ingress.do_decoding_table",
-            "NoAction" : "c_ingress.do_decoding_table"
+            "c_ingress.coding" : "c_ingress.tab_decoding",
+            "NoAction" : "c_ingress.tab_decoding"
           },
           "default_entry" : {
             "action_id" : 3,
@@ -2659,13 +2659,13 @@
           }
         },
         {
-          "name" : "c_ingress.do_decoding_table",
+          "name" : "c_ingress.tab_decoding",
           "id" : 7,
           "source_info" : {
             "filename" : "xorcoding.p4",
             "line" : 247,
             "column" : 10,
-            "source_fragment" : "do_decoding_table"
+            "source_fragment" : "tab_decoding"
           },
           "key" : [
             {
@@ -2688,11 +2688,11 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [11, 4],
-          "actions" : ["c_ingress.action_decoding", "NoAction"],
-          "base_default_next" : "c_ingress.store_table",
+          "actions" : ["c_ingress.decoding", "NoAction"],
+          "base_default_next" : "c_ingress.tab_store",
           "next_tables" : {
-            "c_ingress.action_decoding" : "c_ingress.store_table",
-            "NoAction" : "c_ingress.store_table"
+            "c_ingress.decoding" : "c_ingress.tab_store",
+            "NoAction" : "c_ingress.tab_store"
           },
           "default_entry" : {
             "action_id" : 4,
@@ -2702,13 +2702,13 @@
           }
         },
         {
-          "name" : "c_ingress.store_table",
+          "name" : "c_ingress.tab_store",
           "id" : 8,
           "source_info" : {
             "filename" : "xorcoding.p4",
             "line" : 258,
             "column" : 10,
-            "source_fragment" : "store_table"
+            "source_fragment" : "tab_store"
           },
           "key" : [
             {
@@ -2725,10 +2725,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [12, 5],
-          "actions" : ["c_ingress.store_action", "NoAction"],
+          "actions" : ["c_ingress.store", "NoAction"],
           "base_default_next" : "tbl_act_4",
           "next_tables" : {
-            "c_ingress.store_action" : "tbl_act_4",
+            "c_ingress.store" : "tbl_act_4",
             "NoAction" : "tbl_act_4"
           },
           "default_entry" : {
@@ -3075,10 +3075,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [9, 2],
-          "actions" : ["c_ingress.action_multicast", "NoAction"],
+          "actions" : ["c_ingress.multicast", "NoAction"],
           "base_default_next" : "c_ingress.tab_unicast",
           "next_tables" : {
-            "c_ingress.action_multicast" : "c_ingress.tab_unicast",
+            "c_ingress.multicast" : "c_ingress.tab_unicast",
             "NoAction" : "c_ingress.tab_unicast"
           },
           "default_entry" : {
@@ -3161,7 +3161,7 @@
             }
           },
           "true_next" : "tbl_act_0",
-          "false_next" : "c_ingress.t_l2_fwd"
+          "false_next" : "c_ingress.tab_l2_fwd"
         },
         {
           "name" : "node_8",
@@ -3224,7 +3224,7 @@
               }
             }
           },
-          "true_next" : "c_ingress.do_coding_table",
+          "true_next" : "c_ingress.tab_coding",
           "false_next" : "node_42"
         },
         {
@@ -3414,7 +3414,7 @@
             "filename" : "xorcoding.p4",
             "line" : 335,
             "column" : 19,
-            "source_fragment" : "meta.coding_metadata.do_coding == 1"
+            "source_fragment" : "meta.coding_metadata.coding_flag == 1"
           },
           "expression" : {
             "type" : "expression",
@@ -3422,7 +3422,7 @@
               "op" : "==",
               "left" : {
                 "type" : "field",
-                "value" : ["userMetadata.coding_metadata", "do_coding"]
+                "value" : ["userMetadata.coding_metadata", "coding_flag"]
               },
               "right" : {
                 "type" : "hexstr",
@@ -3542,7 +3542,7 @@
             "filename" : "xorcoding.p4",
             "line" : 369,
             "column" : 24,
-            "source_fragment" : "meta.coding_metadata.do_decoding == 1"
+            "source_fragment" : "meta.coding_metadata.decoding_flag == 1"
           },
           "expression" : {
             "type" : "expression",
@@ -3550,7 +3550,7 @@
               "op" : "==",
               "left" : {
                 "type" : "field",
-                "value" : ["userMetadata.coding_metadata", "do_decoding"]
+                "value" : ["userMetadata.coding_metadata", "decoding_flag"]
               },
               "right" : {
                 "type" : "hexstr",

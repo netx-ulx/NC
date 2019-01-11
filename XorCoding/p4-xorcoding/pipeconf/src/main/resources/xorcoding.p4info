@@ -1,8 +1,8 @@
 tables {
   preamble {
-    id: 33606914
-    name: "c_ingress.t_l2_fwd"
-    alias: "t_l2_fwd"
+    id: 33605531
+    name: "c_ingress.tab_l2_fwd"
+    alias: "tab_l2_fwd"
   }
   match_fields {
     id: 1
@@ -79,7 +79,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 16806042
+    id: 16811626
   }
   action_refs {
     id: 16800567
@@ -90,18 +90,18 @@ tables {
 }
 tables {
   preamble {
-    id: 33556791
-    name: "c_ingress.do_coding_table"
-    alias: "do_coding_table"
+    id: 33573078
+    name: "c_ingress.tab_coding"
+    alias: "tab_coding"
   }
   match_fields {
     id: 1
-    name: "meta.coding_metadata.do_coding"
+    name: "meta.coding_metadata.coding_flag"
     bitwidth: 8
     match_type: EXACT
   }
   action_refs {
-    id: 16809959
+    id: 16809787
   }
   action_refs {
     id: 16800567
@@ -112,9 +112,9 @@ tables {
 }
 tables {
   preamble {
-    id: 33600857
-    name: "c_ingress.do_decoding_table"
-    alias: "do_decoding_table"
+    id: 33590742
+    name: "c_ingress.tab_decoding"
+    alias: "tab_decoding"
   }
   match_fields {
     id: 1
@@ -129,7 +129,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 16815724
+    id: 16827891
   }
   action_refs {
     id: 16800567
@@ -140,9 +140,9 @@ tables {
 }
 tables {
   preamble {
-    id: 33560158
-    name: "c_ingress.store_table"
-    alias: "store_table"
+    id: 33563046
+    name: "c_ingress.tab_store"
+    alias: "tab_store"
   }
   match_fields {
     id: 1
@@ -151,7 +151,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 16804913
+    id: 16808821
   }
   action_refs {
     id: 16800567
@@ -188,9 +188,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16806042
-    name: "c_ingress.action_multicast"
-    alias: "action_multicast"
+    id: 16811626
+    name: "c_ingress.multicast"
+    alias: "multicast"
   }
   params {
     id: 1
@@ -200,9 +200,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16809959
-    name: "c_ingress.action_coding"
-    alias: "action_coding"
+    id: 16809787
+    name: "c_ingress.coding"
+    alias: "coding"
   }
   params {
     id: 1
@@ -212,9 +212,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16815724
-    name: "c_ingress.action_decoding"
-    alias: "action_decoding"
+    id: 16827891
+    name: "c_ingress.decoding"
+    alias: "decoding"
   }
   params {
     id: 1
@@ -224,9 +224,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16804913
-    name: "c_ingress.store_action"
-    alias: "store_action"
+    id: 16808821
+    name: "c_ingress.store"
+    alias: "store"
   }
   params {
     id: 1
@@ -272,7 +272,7 @@ direct_counters {
   spec {
     unit: BOTH
   }
-  direct_table_id: 33606914
+  direct_table_id: 33605531
 }
 controller_packet_metadata {
   preamble {

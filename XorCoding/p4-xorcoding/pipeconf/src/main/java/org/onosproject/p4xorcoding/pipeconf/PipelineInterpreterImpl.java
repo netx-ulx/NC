@@ -69,7 +69,7 @@ public final class PipelineInterpreterImpl
     private static final String DOT = ".";
     private static final String HDR = "hdr";
     private static final String C_INGRESS = "c_ingress";
-    private static final String T_L2_FWD = "t_l2_fwd";
+    private static final String T_L2_FWD = "tab_l2_fwd";
     private static final String EGRESS_PORT = "egress_port";
     private static final String INGRESS_PORT = "ingress_port";
     private static final String ETHERNET = "ethernet";

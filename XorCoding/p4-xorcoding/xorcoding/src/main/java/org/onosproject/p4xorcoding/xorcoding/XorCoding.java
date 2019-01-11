@@ -167,7 +167,7 @@ public class XorCoding {
      */
     private void insertStorePayloadRule(DeviceId switchId, PortNumber inPort, long storeFlag) {
 
-        PiTableId storePayloadTableId = PiTableId.of("c_ingress.store_table");
+        PiTableId storePayloadTableId = PiTableId.of("c_ingress.tab_store");
 
         PiMatchFieldId ingressPortMatchFieldId = PiMatchFieldId.of("standard_metadata.ingress_port");
         PiCriterion match = PiCriterion.builder()
@@ -177,7 +177,7 @@ public class XorCoding {
         PiActionParamId storeFlagParamId = PiActionParamId.of("store_flag");
         PiActionParam storeFlagParam = new PiActionParam(storeFlagParamId, (short) storeFlag);
 
-        PiActionId ingressActionId = PiActionId.of("c_ingress.store_action");
+        PiActionId ingressActionId = PiActionId.of("c_ingress.store");
         PiAction action = PiAction.builder()
                 .withId(ingressActionId)
                 .withParameter(storeFlagParam)
@@ -190,10 +190,10 @@ public class XorCoding {
      * @param codeFlag
      */
     private void insertCodingRule(DeviceId switchId, long codeFlag) {
-        PiTableId codeTableId = PiTableId.of("c_ingress.do_coding_table");
+        PiTableId codeTableId = PiTableId.of("c_ingress.tab_coding");
 
         long codeFlagMatchField = 0;
-        PiMatchFieldId codeFlagMatchFieldId = PiMatchFieldId.of("meta.coding_metadata.do_coding");
+        PiMatchFieldId codeFlagMatchFieldId = PiMatchFieldId.of("meta.coding_metadata.coding_flag");
         PiCriterion match = PiCriterion.builder()
                 .matchExact(codeFlagMatchFieldId, codeFlagMatchField)
                 .build();
@@ -202,7 +202,7 @@ public class XorCoding {
         PiActionParam codeFlagParam = new PiActionParam(codeFlagParamId, (short) codeFlag);
 
 
-        PiActionId ingressActionId = PiActionId.of("c_ingress.action_coding");
+        PiActionId ingressActionId = PiActionId.of("c_ingress.coding");
         PiAction action = PiAction.builder()
                 .withId(ingressActionId)
                 .withParameter(codeFlagParam)
@@ -215,7 +215,7 @@ public class XorCoding {
      * @param decodeFlag
      */
     private void insertDecodingRule(DeviceId switchId, PortNumber inPort, long decodeFlag) {
-        PiTableId decodeTableId = PiTableId.of("c_ingress.do_decoding_table");
+        PiTableId decodeTableId = PiTableId.of("c_ingress.tab_decoding");
 
         long type = 2;
         PiMatchFieldId ingressPortMatchFieldId = PiMatchFieldId.of("standard_metadata.ingress_port");
@@ -227,7 +227,7 @@ public class XorCoding {
 
         PiActionParamId decodeFlagParamId = PiActionParamId.of("decoding_flag");
         PiActionParam decodeFlagParam = new PiActionParam(decodeFlagParamId, (short) decodeFlag);
-        PiActionId ingressActionId = PiActionId.of("c_ingress.action_decoding");
+        PiActionId ingressActionId = PiActionId.of("c_ingress.decoding");
         PiAction action = PiAction.builder()
                 .withId(ingressActionId)
                 .withParameter(decodeFlagParam)
@@ -290,7 +290,7 @@ public class XorCoding {
         PiActionParam groupParam = new PiActionParam(groupParamId, groupId);
 
 
-        PiActionId ingressActionId = PiActionId.of("c_ingress.action_multicast");
+        PiActionId ingressActionId = PiActionId.of("c_ingress.multicast");
         PiAction action = PiAction.builder()
                 .withId(ingressActionId)
                 .withParameter(groupParam)
