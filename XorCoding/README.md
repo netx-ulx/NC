@@ -42,6 +42,9 @@ Regarding the coding process itself, the p4 program can be seen as having three 
 The action provided by each table sets the respective metadata fields values ```store_flag```, ```do_coding```, and ```do_decoding``` to 1. This is done so that when the packet reaches the control block, the processing applied changes depending on the rules installed in the switches.   
 
 ## XorCoding.java
+To give credits where it's due. This program follows, more or less, the template provided in the P4+ONOS Tutorial, which can be found here:
+* https://github.com/opennetworkinglab/onos/blob/master/apps/p4-tutorial/mytunnel/src/main/java/org/onosproject/p4tutorial/mytunnel/MyTunnelApp.java
+
 The XorCoding app works by registering an event listener with ONOS Device Listener. 
 This listener is used to notify the XorCoding app every time a new switch is added to the network. 
 Once a switch is added to the network flow rules are installed on it.
