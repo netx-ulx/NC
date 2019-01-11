@@ -197,17 +197,15 @@ Below you will find an animation exemplifying the exercise.
 This time we will run a more complex example. We are going to send packets belonging to different generations.
 To do so repeat steps 1 to 3 from the previous example.
 
-Now on the terminal window of ```h1``` instead of using the ```send.py``` script, execute this one ```sendMultipleGenerations.py```
-You will then be presented with how many generations you are going to send and the size of each one. Meaning the packets being sent across
-the network will be the sum of size of each generation.
+Now on the terminal window of ```h1``` instead of using the ```send.py``` script, execute the ```sendMultipleGenerations.py``` script.
+You will then be presented with how many generations you wish to send and the size of each one. Meaning the packets being sent across the network will be the sum of the size of each generation.
 
-For the sake of this example, let's choose to send ```3``` generations with the first two having size ```2``` and the third one size ```4```.
+For the sake of this example, let's choose to send ```3``` generations with the first two having a size of ```2``` and the third one with a size of ```4```.
 Your terminal should look like this for now:
 
 ![Image](images/1_send_multiple.PNG "butterfly")
 
-Next, it's time to start sending the packets. Choose the generation to which you wish for the packet to belong to and its payload.
-Anything will do. We will be sending 8 packets in total, so let's do the following sequence:
+Next, it's time to start sending the packets. Choose the generation to which you wish for the packet to belong to and its payload. For the generation you will have to choose from the available ones, as for the payload any single character will do. We will be sending 8 packets in total, so let's do the following sequence:
     
     1. First Packet   -> Generation: 0; Payload: a
     2. Second Packet  -> Generation: 1; Payload: b
@@ -228,7 +226,7 @@ This is the result of the packets belonging to two different generations, as suc
     4. Fourth Packet  -> Generation: 0; Payload: d
 
 Let's check those terminals again. As you can see, ```s4``` received two coded packets, the result of ```a xor d``` and ```b xor c``` .
-And both the hosts got both the newly packets sent and the ones which were missing. Your terminals should look like this:
+And both the hosts got the newly packets sent and the ones which were missing. The terminals should look like this:
 
 ![Image](images/5_send_multiple.PNG "butterfly")
 
@@ -243,9 +241,11 @@ Finally, for the last part, send the remaining four packets:
     7. Seventh Packet -> Generation: 2; Payload: g
     8. Eighth Packet  -> Generation: 2; Payload: h
     
-If you check ```s4``` you should see that it has received a total of 4 coded packets. While ```h2``` and ```h3``` have received all 8 packets, not in the same order, but with the correct payload.
+The script should finishing executing after sending these remaining packets.
 
-This concludes this particular example to show off the P4 program capability to handle packets belonging to different generations.
+If you check ```s4``` you should see that it has received a total of 4 coded packets. While ```h2``` and ```h3``` have received all 8 packets, not in the same order, but with the correct original payload.
+
+This concludes this particular example to show off the capability of this P4 program to handle packets belonging to different generations.
     
 
 Additional Notes
