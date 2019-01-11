@@ -41,7 +41,6 @@ def main():
     number_generations = int(raw_input("Enter how many generations to send:\n"))
     generations_packets_sent = [0] * number_generations
     generations = []
-    print generations_packets_sent
     i = 0;
     while i != number_generations:
         print "Enter the size of generation number " + str(i)
