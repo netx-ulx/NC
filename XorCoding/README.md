@@ -193,7 +193,7 @@ Below you will find an animation exemplifying the exercise.
 
 ![](animations/butterflyAnimation.gif)
 
-#XorCoding with multiple generations
+# XorCoding with multiple generations
 This time we will run a more complex example. We are going to send packets belonging to different generations.
 To do so repeat steps 1 to 3 from the previous example.
 
