@@ -25,7 +25,7 @@ const port_t CPU_PORT = 255;
 //The size of each payload in each packet, in this case 1 byte. Simple for testing
 #define PAYLOAD_SIZE 8
 //The size of register which contains and stores the payloads
-#define BUFFER_SIZE 4
+#define BUFFER_SIZE 8
 const bit<16>  TYPE_CODING = 0x1234;
 
 typedef bit<PAYLOAD_SIZE> payload_t;
@@ -359,6 +359,7 @@ control c_ingress(inout headers_t hdr,
                         //from the current generation starting index
                         if(gen_index >= gen_size+1) {
                             freedSpace.write(starting_index_of_generation, gen_size);
+                            generationOffsetBuffer.write(gen, 0);
                         }
 
                         hdr.coding.type = 2;

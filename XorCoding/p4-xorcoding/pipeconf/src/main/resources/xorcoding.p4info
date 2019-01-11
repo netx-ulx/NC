@@ -311,7 +311,7 @@ registers {
       }
     }
   }
-  size: 4
+  size: 8
 }
 registers {
   preamble {
@@ -356,7 +356,7 @@ registers {
       }
     }
   }
-  size: 4
+  size: 8
 }
 registers {
   preamble {
