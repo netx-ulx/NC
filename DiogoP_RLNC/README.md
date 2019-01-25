@@ -26,3 +26,14 @@ These scripts are not originally from this project. The original repository, fro
 
   * https://github.com/emin63/pyfinite
 
+Demo
+=====
+To run the project just open the terminal in the same folder of the project and type ```make```. This will launch mininet.
+Now on the mininet command prompt type ```xterm h1 h2```. Two terminal windows will be launched one for each host.
+
+
+On the terminal window of ```h2``` execute the ```decoder.py``` script. Next on the terminal window of ```h1``` execute the
+```sender.py``` script. On executing it you will be asked to enter two elements for each three packets. Enter numbers between 0 and 255.
+
+
+Meanwhile, as you enter the elements in ```h1```, the ```h2```terminal window will be showing the coded symbols and coefficients that it has received. When it finally receives all three packets. The decoding process will happen and it will show the original symbols that you first entered on ```h1```
