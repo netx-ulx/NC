@@ -32,6 +32,9 @@ To run the project just open the terminal in the same folder of the project and 
 Now on the mininet command prompt type ```xterm h1 h2```. Two terminal windows will be launched one for each host.
 
 
+Don't forget to make all the scripts executable, for example, ```chmod +x sender.py```
+
+
 On the terminal window of ```h2``` execute the ```decoder.py``` script. Next on the terminal window of ```h1``` execute the
 ```sender.py``` script. On executing it you will be asked to enter two elements for each three packets. Enter numbers between 0 and 255.
 
