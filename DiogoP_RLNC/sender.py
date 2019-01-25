@@ -13,8 +13,8 @@ import sys
 import socket
 import random
 import struct
-import ffield
-import genericmatrix
+from pyfinite import ffield
+from pyfinite import genericmatrix
 from scapy.all import sendp, send, get_if_list, get_if_hwaddr
 from scapy.all import Packet
 from scapy.all import Ether, StrFixedLenField, XByteField, IntField, ShortField, BitField, ByteField

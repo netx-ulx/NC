@@ -11,8 +11,8 @@ import sys
 import struct
 import os
 from operator import itemgetter
-import ffield
-import genericmatrix
+from pyfinite import ffield
+from pyfinite import genericmatrix
 from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
 from scapy.all import Packet, IPOption
 from scapy.all import ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
