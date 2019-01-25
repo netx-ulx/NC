@@ -14,7 +14,7 @@ The picture above describes the network scenario. Host ```h1``` sends the origin
 There are three python scripts that make use of the Scapy package with the purpose to generate, send, receive packets and decode them.
 They work as follows:
 
- * ```send.py```, executes by entering the command prompt ```./sender.py  ```, the host will send two packets with the respective indicated payloads
+ * ```send.py```, executes by entering the command prompt ```./sender.py  ```, the host will send three packets and will ask the user for input
  * ```receiver.py```, works by entering the command prompt ```./receiver.py "deviceName" "port"```, the device specified will sniff packets on the provided port.
  * ```decoder.py```, uses the command prompt ```./decoder.py ```, the host will receive and decode the  data.
 
