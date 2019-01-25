@@ -31,10 +31,6 @@ header ethernet_t {
 header rlnc_t {
     bit<8> type;
     bit<8> generation;
-    bit<8> rng_1;
-    bit<8> rng_2;
-    bit<8> rng_3;
-    bit<8> invlog_value;
 }
 
 header coeff_counter_t {
@@ -197,7 +193,6 @@ control MyIngress(inout headers hdr,
                   inout standard_metadata_t standard_metadata) {
 
     // Flags/Pointers
-    register<bit<1>> (1)                nc_enabled;
     register<bit<32>>(1)                buf_index;
     register<bit<8>>(1)                 gen_current;
     register<bit<1>> (1)                gen_current_flag;
@@ -335,7 +330,6 @@ control MyIngress(inout headers hdr,
         bit<GF_BYTES> high = GF_MOD;
         random(meta.arithmetic_metadata.rng_c1, low, high);
 
-        hdr.rlnc.rng_1 = meta.arithmetic_metadata.rng_c1;
 
         // Load Packets to Metadata
         action_load_to_pkt_1(0);
@@ -364,8 +358,6 @@ control MyIngress(inout headers hdr,
         random(meta.arithmetic_metadata.rng_c1, low, high);
         random(meta.arithmetic_metadata.rng_c2, low, high);
 
-        hdr.rlnc.rng_1 = meta.arithmetic_metadata.rng_c1;
-        hdr.rlnc.rng_2 = meta.arithmetic_metadata.rng_c2;
 
         // Load Packets to Metadata
         action_load_to_pkt_1(0);
@@ -407,10 +399,6 @@ control MyIngress(inout headers hdr,
         random(meta.arithmetic_metadata.rng_c1, low, high);
         random(meta.arithmetic_metadata.rng_c2, low, high);
         random(meta.arithmetic_metadata.rng_c3, low, high);
-
-        hdr.rlnc.rng_1 = meta.arithmetic_metadata.rng_c1;
-        hdr.rlnc.rng_2 = meta.arithmetic_metadata.rng_c2;
-        hdr.rlnc.rng_3 = meta.arithmetic_metadata.rng_c3;
 
         // Load Packets to Metadata
         action_load_to_pkt_1(0);

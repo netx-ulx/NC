@@ -2,29 +2,28 @@
 from scapy.all import *
 import sys, os
 
-TYPE_MYTUNNEL = 0x1212
-TYPE_IPV4 = 0x0800
-
+# The RLNC Header, holds the type of the packet.
+# A value of 2 means it's a DATA packet or a coded packet
+# A value of 3 means it's an ACK packet
 class P4RLNC(Packet):
     name = "P4RLNC"
     fields_desc = [ByteField("Type", 2),
-                   ByteField("Generation", 0),
-                   ByteField("rng1", 0),
-                   ByteField("rng2", 0),
-                   ByteField("rng3", 0),
-                   ByteField("invlog_value", 0)]
+                   ByteField("Generation", 0)]
 
-
+# The coefficients necessary for performing the linear combinations
 class Coefficient(Packet):
    fields_desc = [ByteField("coefficient", 1)]
    def extract_padding(self, p):
                 return "", p
 
+# The symbols to be coded
 class SymbolVector(Packet):
    fields_desc = [ByteField("symbol1", 1),
                   ByteField("symbol2", 1)]
    
 
+# A list to hold all the coefficients
+# The number of the coefficients is equal to the size of the generation
 class CoefficientVector(Packet):
 	fields_desc = [ByteField("count", 1),
 				   PacketListField("coefficients",
