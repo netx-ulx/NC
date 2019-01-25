@@ -24,5 +24,5 @@ So that the original sent data could be obtained.
 
 These scripts are not originally from this project. The original repository, from where they come from, can be found in the following link:
 
-*https://github.com/emin63/pyfinite
+  * https://github.com/emin63/pyfinite
 
