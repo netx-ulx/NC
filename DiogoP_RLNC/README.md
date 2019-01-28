@@ -1,3 +1,11 @@
+Requirements
+====
+To run this project you will need some tools first, such as Mininet, P4Runtime, etc.
+
+There are two ways to obtain these tools.
+ 1. You can follow the instructions in the Obtaining required software section in the following link: https://github.com/p4lang/tutorials
+ 2. You can also download a virtual machine that has all of the required software installed. You can obtain that VM here https://drive.google.com/uc?id=1f22-DYlUV33DsR88_MeMb4s7-1NX_ams&export=download. Then simply copy the folder ```DiogoP_RLNC``` to the ```/home/p4/Desktop/tutorials/exercises``` directory in the VM and you should be good to go.
+
 P4-RLNC Coding Switch
 =====
 This project consists of a network where Random Linear Network Coding is performed over the packets.
