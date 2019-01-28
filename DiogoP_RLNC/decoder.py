@@ -71,7 +71,6 @@ def handle_pkt(pkt):
             packets_received += 1
             if packets_received == 3:
                 b = map(int,column(payload_matrix,0))
-                print b
                 b1 = map(int,column(payload_matrix,1))
                 solve1 = coefficient_matrix.Solve(b)
                 solve2 = coefficient_matrix.Solve(b1)
