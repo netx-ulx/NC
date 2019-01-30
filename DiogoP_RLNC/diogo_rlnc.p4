@@ -31,6 +31,7 @@ header ethernet_t {
 header rlnc_t {
     bit<8> type;
     bit<8> generation;
+    bit<8> buf_index;
 }
 
 header coeff_counter_t {
@@ -104,6 +105,8 @@ struct arithmetic_metadata_t {
     bit<GF_BYTES>           log1;
     bit<GF_BYTES>           log2;
     bit<GF_BYTES>           invlog;
+    bit<GF_BYTES>           a1;
+    bit<GF_BYTES>           b1;
     // Addition: one result
     bit<GF_BYTES>           add_result;
     // Addition: cumulative
@@ -111,11 +114,24 @@ struct arithmetic_metadata_t {
     bit<GF_BYTES>           add_result_2;
 }
 
+struct random_metadata_t {
+	bit<32>	rng_result_1;
+	bit<32>	rng_result_2;
+	bit<32>	rng_result_3;
+
+	bit<32>	rng_idx_max;
+	bit<32>	rng_idx_rng;
+
+	bit<32>	rng_num_at_idx;
+	bit<32>	rng_num_at_max;
+}
+
 struct metadata {
     parser_metadata_t       parser_metadata;
     coding_metadata_t       coding_metadata;
     rlnc_metadata_t         rlnc_metadata;
     arithmetic_metadata_t   arithmetic_metadata;
+    random_metadata_t		random_metadata;
 }
 
 struct headers {
@@ -211,6 +227,9 @@ control MyIngress(inout headers hdr,
     // The ANTILOG table
     register<bit<GF_BYTES>>(1025)       GF256_invlog;
 
+    // For the random algorithm
+    register<bit<32>>(BUF_SIZE)			rng_array;
+
     action action_forward(egressSpec_t port) {
       standard_metadata.egress_spec = port;
     }
@@ -239,13 +258,79 @@ control MyIngress(inout headers hdr,
         bit<32> high = (bit<32>) meta.coding_metadata.buf_index - 1;
         random(meta.coding_metadata.buf_index_r, low, high);
 
-        buf_index.read(meta.coding_metadata.buf_index, 0);
+        buf_index.read(meta.coding_metadata.buf_index_r, 0);
         buf_c1.write(meta.coding_metadata.buf_index_r, hdr.coeff[0].coeff);
         buf_c2.write(meta.coding_metadata.buf_index_r, hdr.coeff[1].coeff);
         buf_c3.write(meta.coding_metadata.buf_index_r, hdr.coeff[2].coeff);
         buf_p1.write(meta.coding_metadata.buf_index_r, hdr.msg[0].content);
         buf_p2.write(meta.coding_metadata.buf_index_r, hdr.msg[1].content);
 
+    }
+
+    action action_rng_random_idx() {
+    	bit<32> low = 0;
+        bit<32> high = (bit<32>) meta.random_metadata.rng_idx_max;
+    	random(meta.random_metadata.rng_idx_rng, low, high);
+    }
+
+    action action_rng_swap() {
+    	rng_array.read(meta.random_metadata.rng_num_at_idx, meta.random_metadata.rng_idx_rng);
+    	rng_array.read(meta.random_metadata.rng_num_at_max, meta.random_metadata.rng_idx_max);
+
+    	rng_array.write(meta.random_metadata.rng_idx_rng, meta.random_metadata.rng_num_at_max);
+    	rng_array.write(meta.random_metadata.rng_idx_max, meta.random_metadata.rng_num_at_idx);
+    }
+
+    action action_rng_update_max() {
+    	meta.random_metadata.rng_idx_max = meta.random_metadata.rng_idx_max - 1;
+    }
+
+    action action_rng_random_1() {
+    	action_rng_random_idx();
+    	action_rng_swap();
+    	rng_array.read(meta.random_metadata.rng_result_1, meta.random_metadata.rng_num_at_max);
+
+    	action_rng_update_max();
+    }
+
+    action action_rng_random_2() {
+    	action_rng_random_idx();
+    	action_rng_swap();
+    	rng_array.read(meta.random_metadata.rng_result_2, meta.random_metadata.rng_num_at_max);
+
+    	action_rng_update_max();
+
+    	action_rng_random_1();
+    	
+    }
+
+    action action_rng_random_3() {
+    	action_rng_random_idx();
+    	action_rng_swap();
+    	rng_array.read(meta.random_metadata.rng_result_3, meta.random_metadata.rng_num_at_max);
+
+    	action_rng_update_max();
+
+    	action_rng_random_2();
+    	
+    }
+
+    action action_rng_init() {
+    	// Create array for indexes [0, BUF_SIZE]
+    	rng_array.write(0,0);
+    	rng_array.write(1,1);
+    	rng_array.write(2,2);
+    	rng_array.write(3,3);
+    	rng_array.write(4,4);
+    	rng_array.write(5,5);
+    	rng_array.write(6,6);
+    	rng_array.write(7,7);
+    	rng_array.write(8,8);
+    	rng_array.write(9,9);
+
+    	meta.random_metadata.rng_idx_max = meta.coding_metadata.buf_index - 1;
+
+    	action_rng_random_3();
     }
 
     action action_load_to_pkt_1 (bit<32> idx) {
@@ -283,6 +368,9 @@ control MyIngress(inout headers hdr,
         meta.arithmetic_metadata.add_result = (a ^ b);
     }
 
+    action action_ffmult() {
+    }
+
     // GF Multiplication Arithmetic Operation
     action action_GF_mult(bit<GF_BYTES> a, bit<GF_BYTES> b) {
         bit<32> log1 = 0;
@@ -293,6 +381,7 @@ control MyIngress(inout headers hdr,
         bit<32> add_b = (bit<32>) log2;
         bit<32> result = add_a + add_b;
         GF256_invlog.read(meta.arithmetic_metadata.invlog, result);
+
     }
 
     // GF Addition: Cumulative Loop
@@ -308,7 +397,7 @@ control MyIngress(inout headers hdr,
     }
 
     // GF Multiplication: Pairing Loop
-    action action_GF_mult_1(bit<GF_BYTES> x1, bit<GF_BYTES> x2) {
+    action action_GF_mult_1(bit<GF_BYTES> x1, bit<GF_BYTES> x2) {	
         action_GF_mult(x1, x2);
         meta.arithmetic_metadata.mult_result_1 = meta.arithmetic_metadata.invlog;
     }
@@ -445,6 +534,57 @@ control MyIngress(inout headers hdr,
 
     }
 
+    action action_recode_r() {
+    	bit<GF_BYTES> low = 0;
+        bit<GF_BYTES> high = GF_MOD;
+        random(meta.arithmetic_metadata.rng_c1, low, high);
+        random(meta.arithmetic_metadata.rng_c2, low, high);
+        random(meta.arithmetic_metadata.rng_c3, low, high);
+
+        action_rng_init();
+        action_load_to_pkt_1(meta.random_metadata.rng_result_1);
+        action_load_to_pkt_2(meta.random_metadata.rng_result_2);
+        action_load_to_pkt_3(meta.random_metadata.rng_result_3);
+
+        // Update packet’s PAYLOAD
+        action_GF_mult_3(meta.arithmetic_metadata.rng_c1, meta.rlnc_metadata.p1_1,
+                         meta.arithmetic_metadata.rng_c2, meta.rlnc_metadata.p2_1,
+                         meta.arithmetic_metadata.rng_c3, meta.rlnc_metadata.p3_1);
+        action_GF_add_2(meta.arithmetic_metadata.mult_result_1, meta.arithmetic_metadata.mult_result_2, meta.arithmetic_metadata.mult_result_3);
+
+        hdr.msg[0].content = meta.arithmetic_metadata.add_result_2;
+
+        action_GF_mult_3(meta.arithmetic_metadata.rng_c1, meta.rlnc_metadata.p1_2, 
+                         meta.arithmetic_metadata.rng_c2, meta.rlnc_metadata.p2_2,
+                         meta.arithmetic_metadata.rng_c3, meta.rlnc_metadata.p3_2);
+        action_GF_add_2(meta.arithmetic_metadata.mult_result_1, meta.arithmetic_metadata.mult_result_2, meta.arithmetic_metadata.mult_result_3);
+
+        hdr.msg[1].content = meta.arithmetic_metadata.add_result_2;
+
+        // Update packet's COEFFICIENTS
+        action_GF_mult_3(meta.arithmetic_metadata.rng_c1, meta.rlnc_metadata.c1_1,
+                         meta.arithmetic_metadata.rng_c2, meta.rlnc_metadata.c2_1,
+                         meta.arithmetic_metadata.rng_c3, meta.rlnc_metadata.c3_1);
+        action_GF_add_2(meta.arithmetic_metadata.mult_result_1, meta.arithmetic_metadata.mult_result_2, meta.arithmetic_metadata.mult_result_3);
+
+        
+        hdr.coeff[0].coeff = meta.arithmetic_metadata.add_result_2;
+
+        action_GF_mult_3(meta.arithmetic_metadata.rng_c1, meta.rlnc_metadata.c1_2,
+                         meta.arithmetic_metadata.rng_c2, meta.rlnc_metadata.c2_2,
+                         meta.arithmetic_metadata.rng_c3, meta.rlnc_metadata.c3_2);
+        action_GF_add_2(meta.arithmetic_metadata.mult_result_1, meta.arithmetic_metadata.mult_result_2, meta.arithmetic_metadata.mult_result_3);
+
+        hdr.coeff[1].coeff = meta.arithmetic_metadata.add_result_2;
+
+        action_GF_mult_3(meta.arithmetic_metadata.rng_c1, meta.rlnc_metadata.c1_3,
+                         meta.arithmetic_metadata.rng_c2, meta.rlnc_metadata.c2_3,
+                         meta.arithmetic_metadata.rng_c3, meta.rlnc_metadata.c3_3);
+        action_GF_add_2(meta.arithmetic_metadata.mult_result_1, meta.arithmetic_metadata.mult_result_2, meta.arithmetic_metadata.mult_result_3);
+
+        hdr.coeff[2].coeff = meta.arithmetic_metadata.add_result_2;
+    }
+
     action action_load_nc_metadata(bit<1> nc_flag, bit<1> gen_flag) {
         meta.coding_metadata.nc_enabled_flag = nc_flag;
         meta.coding_metadata.gen_current_flag = gen_flag;
@@ -485,14 +625,18 @@ control MyIngress(inout headers hdr,
         table_load_1.apply();
         if(meta.coding_metadata.nc_enabled_flag == 1) {
 
+
             if(meta.coding_metadata.gen_current_flag == 0) {
                 action_set_gen_current();
             }
 
             action_load_gen_metadata();
-
+            
+            bit<32> tmp = 0;
+            buf_index.read(tmp, 0);
+            hdr.rlnc.buf_index = (bit<8>) tmp;
             if(hdr.rlnc.type == TYPE_DATA && hdr.rlnc.generation == meta.coding_metadata.gen_current) {
-                if(meta.coding_metadata.buf_index < BUF_SIZE) {
+                if(meta.coding_metadata.buf_index <= BUF_SIZE) {
                     action_write();
                     action_update_buffer_index();
                 }
@@ -500,7 +644,10 @@ control MyIngress(inout headers hdr,
                     action_overwrite();
                 }
 
-                if(meta.coding_metadata.buf_index == 1) {
+                if(meta.coding_metadata.buf_index >= GEN_SIZE && meta.coding_metadata.buf_index <= BUF_SIZE) {
+                	action_recode_r();
+                }
+                else if(meta.coding_metadata.buf_index == 1) {
                     action_recode_1();
                 }
 
