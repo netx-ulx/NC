@@ -1,0 +1,2 @@
+table_add table_forward action_forward 1 => 2
+table_add table_forward action_forward 2 => 1

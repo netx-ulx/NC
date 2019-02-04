@@ -1,0 +1,1 @@
+GF(2^8) Calculator. KODO library implementation
