@@ -28,19 +28,11 @@ header ethernet_t {
 header ff_calc_t {
 	bit<8> a;
 	bit<8> b;
-    bit<8> result;
+    	bit<8> result;
 }
 
-struct arithmetic_metadata_t{
-    bit<8>  a;
-    bit<8>  b;
-    bit<8>  result;
-    bit<8>  low_bit_flag;
-    bit<8>  high_bit_flag;
-}
 
 struct metadata {
-    arithmetic_metadata_t   arithmetic_metadata;
 }
 
 struct headers {
