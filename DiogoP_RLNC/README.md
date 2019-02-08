@@ -34,6 +34,15 @@ These scripts are not originally from this project. The original repository, fro
 
   * https://github.com/emin63/pyfinite
 
+diogo_rlnc_online.p4 Vs. diogo_rlnc.p4
+===
+There are two versions of RLNC in this repository, their differences are:
+
+ *```diogo_rlnc_online.p4```: Implements multiplication through a shif-and-add method, doesn't require tables of any kind.
+ *```diogo_rlnc.p4```: Implements multiplication through two tables that are stored in the register. A Log table and an Antilog table.
+ 
+Load the one you want to run in the switch. Other than the difference described above, the program remains more or less identical.
+
 Demo
 =====
 To run the project just open the terminal in the same folder of the project and type ```make```. This will launch mininet.
