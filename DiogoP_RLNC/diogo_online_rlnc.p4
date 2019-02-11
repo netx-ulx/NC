@@ -6,7 +6,7 @@
 #include "includes/deparser.p4"
 #include "includes/registers.p4"
 
-//The chosen irreducible polynomial choosen to be used in the multiplication operation
+//The irreducible polynomial choosen to be used in the multiplication operation
 #define IRRED_POLY 0x11b
 
 /*************************************************************************
@@ -94,7 +94,7 @@ control MyIngress(inout headers hdr,
     // Shift-and-Add method to perform multiplication
     // There are 3 pairs of values being multiplied at the same time, that's why
     // there are x1,...,x3 and y1,...,y3 which are the values that are going to be multiplied
-    // There we have result1,...,result3 where the product is going to be stored in
+    // Then we have result1,...,result3 where the product is going to be stored in
     // Since we perform this action multiple times we need to buffer the resulting values in
     // registers to pass it over to the next iteration. To do so we read the value that is present
     // in the register at the moment and when all operations are done we write the resulting values
@@ -161,7 +161,7 @@ control MyIngress(inout headers hdr,
     // GF Multiplication Arithmetic Operation
     // First we initialise the values into the respective register
     // Then we perform the same action 8 times, for each bit, to perform multiplication.
-    // Finally we load the results to metadata to perform addition later
+    // Finally we load the results to metadata to perform addition later on
     action action_GF_mult(bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2, bit<GF_BYTES> x3, bit<GF_BYTES> y3) {
         arithmetic_args.write(0,x1);
         arithmetic_args.write(1,y1);
