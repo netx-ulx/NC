@@ -37,6 +37,8 @@ header rlnc_t {
     bit<8> buf_index;
 }
 
+
+#SALVO: why is the counter a separate header?
 header coeff_counter_t {
     bit<8>     count;
 }
@@ -45,6 +47,7 @@ header coeff_t {
     bit<8> coeff;
 }
 
+#SALVO: Is this used anywhere? If not, please delete it.
 header msg_counter_t {
     bit<8>     count;
 }
@@ -160,6 +163,7 @@ parser MyParser(packet_in packet,
         transition parse_coeff_counter;
     }
 
+	#SALVO: why are there two states? Could you not merge parse_rnlc and parse_coeff_counter?
     state parse_coeff_counter {
         packet.extract(hdr.coeff_counter);
         meta.parser_metadata.remaining_coeff = hdr.coeff_counter.count;
@@ -176,6 +180,7 @@ parser MyParser(packet_in packet,
     }
 
     state parse_msg {
+#SALVO: do you need next in the next extract to extract them all? 
         packet.extract(hdr.msg.next);
         transition parse_msg;
     }
@@ -213,11 +218,12 @@ control MyIngress(inout headers hdr,
     register<bit<GF_BYTES>>(BUF_SIZE)   buf_c2;
     register<bit<GF_BYTES>>(BUF_SIZE)   buf_c3;
 
-
+#SALVO: I think here there might be a much general program with your programming habit of using multiple registers to do very similar things instead of using only one register and indexing that according to the different information you may need to access...For example, in the case below, do they really need to be in multiple registers? 
     register<bit<8>>(6)					mult_args;
     register<bit<8>>(3)					mult_results;
     register<bit<8>>(1)					add_result;
-
+ 
+#SALVO: Are there used anywhere? If not, please delete them
     /*
     register<bit<8>>(1)                 mult_result_1;
     register<bit<8>>(1)                 mult_result_2;
