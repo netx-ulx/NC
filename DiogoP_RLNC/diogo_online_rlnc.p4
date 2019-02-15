@@ -60,7 +60,7 @@ control MyIngress(inout headers hdr,
     }
 
     //Loads a coefficient and a symbol from the provided index to metadata
-    action action_load_to_pkt(bit<32> idx) {
+    action action_load_to_pkt_1(bit<32> idx) {
         buf_c1.read(meta.rlnc_metadata.c1_1, idx);
         buf_c2.read(meta.rlnc_metadata.c1_2, idx);
         buf_c3.read(meta.rlnc_metadata.c1_3, idx);
@@ -69,6 +69,26 @@ control MyIngress(inout headers hdr,
         buf_p2.read(meta.rlnc_metadata.p1_2, idx);
 
     }
+
+    action action_load_to_pkt_2(bit<32> idx) {
+        buf_c1.read(meta.rlnc_metadata.c2_1, idx);
+        buf_c2.read(meta.rlnc_metadata.c2_2, idx);
+        buf_c3.read(meta.rlnc_metadata.c2_3, idx);
+
+        buf_p1.read(meta.rlnc_metadata.p2_1, idx);
+        buf_p2.read(meta.rlnc_metadata.p2_2, idx);
+    }
+
+    action action_load_to_pkt_3(bit<32> idx) {
+        buf_c1.read(meta.rlnc_metadata.c3_1, idx);
+        buf_c2.read(meta.rlnc_metadata.c3_2, idx);
+        buf_c3.read(meta.rlnc_metadata.c3_3, idx);
+
+        buf_p1.read(meta.rlnc_metadata.p3_1, idx);
+        buf_p2.read(meta.rlnc_metadata.p3_2, idx);
+    }
+
+
 
     //Enables coding through a flag
     action action_load_nc_metadata(bit<1> nc_flag, bit<1> gen_flag) {
@@ -157,7 +177,7 @@ control MyIngress(inout headers hdr,
         arithmetic_args.write(7,result2);
         arithmetic_args.write(8,result3);
     }
-    
+
     // GF Multiplication Arithmetic Operation
     // First we initialise the values into the respective register
     // Then we perform the same action 8 times, for each bit, to perform multiplication.
@@ -198,7 +218,7 @@ control MyIngress(inout headers hdr,
         action_GF_add(x1, x2, x3);
     }
 
-    action action_GF_mult_1(bit<GF_BYTES> x1, bit<GF_BYTES> x2) {	
+    action action_GF_mult_1(bit<GF_BYTES> x1, bit<GF_BYTES> x2) {
         action_GF_mult(x1, x2, 0, 0, 0, 0);
     }
 
@@ -219,7 +239,7 @@ control MyIngress(inout headers hdr,
 
 
         // Load Packets to Metadata
-        action_load_to_pkt(0);
+        action_load_to_pkt_1(0);
 
         // Update packet’s PAYLOAD
         action_GF_mult_1(rand_num1, meta.rlnc_metadata.p1_1);
@@ -250,8 +270,8 @@ control MyIngress(inout headers hdr,
 
 
         // Load Packets to Metadata
-        action_load_to_pkt(0);
-        action_load_to_pkt(1);
+        action_load_to_pkt_1(0);
+        action_load_to_pkt_2(1);
 
         // Update packet’s PAYLOAD
         action_GF_mult_2(rand_num1, meta.rlnc_metadata.p1_1, rand_num2, meta.rlnc_metadata.p2_1);
@@ -295,9 +315,9 @@ control MyIngress(inout headers hdr,
         random(rand_num3, low, high);
 
         // Load Packets to Metadata
-        action_load_to_pkt(0);
-        action_load_to_pkt(1);
-        action_load_to_pkt(2);
+        action_load_to_pkt_1(0);
+        action_load_to_pkt_2(1);
+        action_load_to_pkt_3(2);
 
         // Update packet’s PAYLOAD
         action_GF_mult_3(rand_num1, meta.rlnc_metadata.p1_1,
