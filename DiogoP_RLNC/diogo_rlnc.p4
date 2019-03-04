@@ -1,3 +1,7 @@
+/*
+The coding scheme here implemented is a variant of the standard RLNC, called Sparse RLNC with Incremental Density. The density indicates the number of packets used as input to the encoding/recoding process. This differ from the standard RLNC where the generation size is always used as number of packets for any encoding/recoding operation.
+*/
+
 /* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
@@ -29,20 +33,20 @@ control MyIngress(inout headers hdr,
     register<bit<GF_BYTES>>(1025)       GF256_invlog;
 
     // For the random algorithm
-    register<bit<32>>(BUF_SIZE)	    rng_array;
+    register<bit<32>>(MAX_BUF_SIZE)	    rng_array;
 
     action action_forward(egressSpec_t port) {
       standard_metadata.egress_spec = port;
     }
 
     action action_update_buffer_index() {
-        buf_index.write(0, meta.coding_metadata.buf_index + 1);
-        buf_index.read(meta.coding_metadata.buf_index, 0);
+        buf_index.write(0, meta.coding.buf_index + 1);
+        buf_index.read(meta.coding.buf_index, 0);
     }
 
     action action_step_to_next_gen() {
-        gen_current.write(0, meta.coding_metadata.gen_current + 1);
-        gen_current.read(meta.coding_metadata.gen_current, 0);
+        gen_current.write(0, meta.coding.gen_current + 1);
+        gen_current.read(meta.coding.gen_current, 0);
     }
 
 
@@ -80,25 +84,25 @@ control MyIngress(inout headers hdr,
 
 
     action action_write() {
-        buf_index.read(meta.coding_metadata.buf_index, 0);
-        buf_c1.write(meta.coding_metadata.buf_index, hdr.coeff[0].coeff);
-        buf_c2.write(meta.coding_metadata.buf_index, hdr.coeff[1].coeff);
-        buf_c3.write(meta.coding_metadata.buf_index, hdr.coeff[2].coeff);
-        buf_p1.write(meta.coding_metadata.buf_index, hdr.msg[0].content);
-        buf_p2.write(meta.coding_metadata.buf_index, hdr.msg[1].content);
+        buf_index.read(meta.coding.buf_index, 0);
+        buf_c1.write(meta.coding.buf_index, hdr.coeff[0].coeff);
+        buf_c2.write(meta.coding.buf_index, hdr.coeff[1].coeff);
+        buf_c3.write(meta.coding.buf_index, hdr.coeff[2].coeff);
+        buf_p1.write(meta.coding.buf_index, hdr.msg[0].content);
+        buf_p2.write(meta.coding.buf_index, hdr.msg[1].content);
     }
 
     action action_overwrite() {
         bit<32> low = 0;
-        bit<32> high = (bit<32>) meta.coding_metadata.buf_index - 1;
-        random(meta.coding_metadata.buf_index_r, low, high);
+        bit<32> high = (bit<32>) meta.coding.buf_index - 1;
+        random(meta.coding.buf_index_r, low, high);
 
-        buf_index.read(meta.coding_metadata.buf_index_r, 0);
-        buf_c1.write(meta.coding_metadata.buf_index_r, hdr.coeff[0].coeff);
-        buf_c2.write(meta.coding_metadata.buf_index_r, hdr.coeff[1].coeff);
-        buf_c3.write(meta.coding_metadata.buf_index_r, hdr.coeff[2].coeff);
-        buf_p1.write(meta.coding_metadata.buf_index_r, hdr.msg[0].content);
-        buf_p2.write(meta.coding_metadata.buf_index_r, hdr.msg[1].content);
+        buf_index.read(meta.coding.buf_index_r, 0);
+        buf_c1.write(meta.coding.buf_index_r, hdr.coeff[0].coeff);
+        buf_c2.write(meta.coding.buf_index_r, hdr.coeff[1].coeff);
+        buf_c3.write(meta.coding.buf_index_r, hdr.coeff[2].coeff);
+        buf_p1.write(meta.coding.buf_index_r, hdr.msg[0].content);
+        buf_p2.write(meta.coding.buf_index_r, hdr.msg[1].content);
 
     }
 
@@ -151,7 +155,7 @@ control MyIngress(inout headers hdr,
     }
 
     action action_rng_init() {
-    	// Create array for indexes [0, BUF_SIZE]
+    	// Create array for indexes [0, MAX_BUF_SIZE]
     	rng_array.write(0,0);
     	rng_array.write(1,1);
     	rng_array.write(2,2);
@@ -163,7 +167,7 @@ control MyIngress(inout headers hdr,
     	rng_array.write(8,8);
     	rng_array.write(9,9);
 
-    	meta.random_metadata.rng_idx_max = meta.coding_metadata.buf_index - 1;
+    	meta.random_metadata.rng_idx_max = meta.coding.buf_index - 1;
 
     	action_rng_random_3();
     }
@@ -388,18 +392,15 @@ control MyIngress(inout headers hdr,
     }
 
     action action_load_nc_metadata(bit<1> nc_flag, bit<1> gen_flag) {
-        meta.coding_metadata.nc_enabled_flag = nc_flag;
-        meta.coding_metadata.gen_current_flag = gen_flag;
+        meta.coding.nc_enabled_flag = nc_flag;
+        meta.coding.gen_current_flag = gen_flag;
     }
 
     action action_set_gen_current() {
         gen_current.write(0, hdr.rlnc.generation);
+        gen_current.read(meta.coding.gen_current, 0);
         gen_current_flag.write(0, 1);
-    }
-
-    action action_load_gen_metadata() {
-        gen_current.read(meta.coding_metadata.gen_current, 0);
-        gen_current_flag.read(meta.coding_metadata.gen_current_flag, 0);
+        gen_current_flag.read(meta.coding.gen_current_flag, 0);
     }
 
     table table_forward {
@@ -425,17 +426,12 @@ control MyIngress(inout headers hdr,
     apply {
         table_forward.apply();
         table_load_1.apply();
-        if(meta.coding_metadata.nc_enabled_flag == 1) {
+        if(meta.coding.nc_enabled_flag == 1) {
 
+            action_set_gen_current();
 
-            if(meta.coding_metadata.gen_current_flag == 0) {
-                action_set_gen_current();
-            }
-
-            action_load_gen_metadata();
-
-            if(hdr.rlnc.type == TYPE_DATA && hdr.rlnc.generation == meta.coding_metadata.gen_current) {
-                if(meta.coding_metadata.buf_index <= BUF_SIZE) {
+            if(hdr.rlnc.type == TYPE_DATA && hdr.rlnc.generation == meta.coding.gen_current) {
+                if(meta.coding.buf_index <= MAX_BUF_SIZE) {
                     action_write();
                     action_update_buffer_index();
                 }
@@ -443,18 +439,18 @@ control MyIngress(inout headers hdr,
                     action_overwrite();
                 }
 
-                if(meta.coding_metadata.buf_index == 1) {
+                if(meta.coding.buf_index == 1) {
                     action_recode_1();
                 }
 
-                else if(meta.coding_metadata.buf_index == 2) {
+                else if(meta.coding.buf_index == 2) {
                     action_recode_2();
                 }
-                else if(meta.coding_metadata.buf_index == 3) {
+                else if(meta.coding.buf_index == 3) {
                     action_recode_3();
                 }
             }
-            else if(hdr.rlnc.type == TYPE_ACK && hdr.rlnc.generation == meta.coding_metadata.gen_current) {
+            else if(hdr.rlnc.type == TYPE_ACK && hdr.rlnc.generation == meta.coding.gen_current) {
                 action_step_to_next_gen();
             }
 

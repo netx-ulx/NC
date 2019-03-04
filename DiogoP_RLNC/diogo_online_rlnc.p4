@@ -31,6 +31,7 @@ control MyIngress(inout headers hdr,
     // 0-5: These indexes store the 3 pairs of values that are multiplied together
     // 6-8: These indedes store the result of each multiplication of the 3 pairs
     // 9: Finally in this last index is the result of adding the 3 products together
+	//SALVO: do we really need a register for the partial results of the op? Cannot those be stored in variables?	
     register<bit<8>>(10)		    arithmetic_args;
 
     action action_forward(egressSpec_t port) {
@@ -39,24 +40,24 @@ control MyIngress(inout headers hdr,
 
     // Updates the packet buffer index each time a new packet arrives
     action action_update_buffer_index() {
-        buf_index.write(0, meta.coding_metadata.buf_index + 1);
-        buf_index.read(meta.coding_metadata.buf_index, 0);
+        buf_index.write(0, meta.coding.buf_index + 1);
+        buf_index.read(meta.coding.buf_index, 0);
     }
 
     // When a generation is fully decoded it's time to advance to the next generation
     action action_step_to_next_gen() {
-        gen_current.write(0, meta.coding_metadata.gen_current + 1);
-        gen_current.read(meta.coding_metadata.gen_current, 0);
+        gen_current.write(0, meta.coding.gen_current + 1);
+        gen_current.read(meta.coding.gen_current, 0);
     }
 
     // Buffers the symbols and coefficients to the respective indexes
     action action_write() {
-        buf_index.read(meta.coding_metadata.buf_index, 0);
-        buf_c1.write(meta.coding_metadata.buf_index, hdr.coeff[0].coeff);
-        buf_c2.write(meta.coding_metadata.buf_index, hdr.coeff[1].coeff);
-        buf_c3.write(meta.coding_metadata.buf_index, hdr.coeff[2].coeff);
-        buf_p1.write(meta.coding_metadata.buf_index, hdr.msg[0].content);
-        buf_p2.write(meta.coding_metadata.buf_index, hdr.msg[1].content);
+        buf_index.read(meta.coding.buf_index, 0);
+        buf_c1.write(meta.coding.buf_index, hdr.coeff[0].coeff);
+        buf_c2.write(meta.coding.buf_index, hdr.coeff[1].coeff);
+        buf_c3.write(meta.coding.buf_index, hdr.coeff[2].coeff);
+        buf_p1.write(meta.coding.buf_index, hdr.msg[0].content);
+        buf_p2.write(meta.coding.buf_index, hdr.msg[1].content);
     }
 
     //Loads a coefficient and a symbol from the provided index to metadata
@@ -92,8 +93,8 @@ control MyIngress(inout headers hdr,
 
     //Enables coding through a flag
     action action_load_nc_metadata(bit<1> nc_flag, bit<1> gen_flag) {
-        meta.coding_metadata.nc_enabled_flag = nc_flag;
-        meta.coding_metadata.gen_current_flag = gen_flag;
+        meta.coding.nc_enabled_flag = nc_flag;
+        meta.coding.gen_current_flag = gen_flag;
     }
 
     action action_set_gen_current() {
@@ -102,8 +103,8 @@ control MyIngress(inout headers hdr,
     }
 
     action action_load_gen_metadata() {
-        gen_current.read(meta.coding_metadata.gen_current, 0);
-        gen_current_flag.read(meta.coding_metadata.gen_current_flag, 0);
+        gen_current.read(meta.coding.gen_current, 0);
+        gen_current_flag.read(meta.coding.gen_current_flag, 0);
     }
 
     // GF Addition Arithmetic Operation of the 3 products
@@ -112,6 +113,8 @@ control MyIngress(inout headers hdr,
     }
 
     // Shift-and-Add method to perform multiplication
+	// SALVO: why are there three pairs? Please state the operation you perform
+	// for ex. r= x1*a + x2*b + x3*c
     // There are 3 pairs of values being multiplied at the same time, that's why
     // there are x1,...,x3 and y1,...,y3 which are the values that are going to be multiplied
     // Then we have result1,...,result3 where the product is going to be stored in
@@ -138,6 +141,8 @@ control MyIngress(inout headers hdr,
         arithmetic_args.read(result1, 6);
         arithmetic_args.read(result2, 7);
         arithmetic_args.read(result3, 8);
+
+		//SALVO: have you checked the operators precedence in the language specification? Does the logical AND has higher priority than the equality operator?
         if(y1 & 1 == 1) {
         	result1 = result1 ^ x1;
         }
@@ -383,33 +388,33 @@ control MyIngress(inout headers hdr,
     apply {
         table_forward.apply();
         table_load_1.apply();
-        if(meta.coding_metadata.nc_enabled_flag == 1) {
+        if(meta.coding.nc_enabled_flag == 1) {
 
 
-            if(meta.coding_metadata.gen_current_flag == 0) {
+            if(meta.coding.gen_current_flag == 0) {
                 action_set_gen_current();
             }
 
             action_load_gen_metadata();
 
-            if(hdr.rlnc.type == TYPE_DATA && hdr.rlnc.generation == meta.coding_metadata.gen_current) {
-                if(meta.coding_metadata.buf_index <= BUF_SIZE) {
+            if(hdr.rlnc.type == TYPE_DATA && hdr.rlnc.generation == meta.coding.gen_current) {
+                if(meta.coding.buf_index <= MAX_BUF_SIZE) {
                     action_write();
                     action_update_buffer_index();
                 }
 
-                if(meta.coding_metadata.buf_index == 1) {
+                if(meta.coding.buf_index == 1) {
                     action_recode_1();
                 }
 
-                else if(meta.coding_metadata.buf_index == 2) {
+                else if(meta.coding.buf_index == 2) {
                     action_recode_2();
                 }
-                else if(meta.coding_metadata.buf_index == 3) {
+                else if(meta.coding.buf_index == 3) {
                     action_recode_3();
                 }
             }
-            else if(hdr.rlnc.type == TYPE_ACK && hdr.rlnc.generation == meta.coding_metadata.gen_current) {
+            else if(hdr.rlnc.type == TYPE_ACK && hdr.rlnc.generation == meta.coding.gen_current) {
                 action_step_to_next_gen();
             }
 

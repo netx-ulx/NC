@@ -27,7 +27,7 @@ header msg_t {
 
 struct parser_metadata_t {
     bit<8>  remaining_coeff;
-    bit<8>  remaining_msg;
+    //bit<8>  remaining_msg;
 }
 
 struct coding_metadata_t {
@@ -105,7 +105,7 @@ struct random_metadata_t {
 
 struct metadata {
     parser_metadata_t       parser_metadata;
-    coding_metadata_t       coding_metadata;
+    coding_metadata_t       coding;
     rlnc_metadata_t         rlnc_metadata;
     arithmetic_metadata_t   arithmetic_metadata;
     random_metadata_t	    random_metadata;

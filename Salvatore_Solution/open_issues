@@ -1,0 +1,7 @@
+# Headers and Parser Definitions
+
+1) How to deal with the case where the field symbols in the rlnc is zero. In this case, the packet contains neither symbols nor coefficients. So the parser should exit righ after the rlnc header is extracted.
+
+A: checking if this can be done through the select clause of the transition statement. I would say so, if you AND this 
+
+2) it is not clear whether or not the SEED field must be 1 or 2 bytes long.

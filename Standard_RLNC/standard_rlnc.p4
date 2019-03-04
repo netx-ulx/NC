@@ -66,32 +66,29 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-    // All the following values are necessary in the implementation of
-    // a buffering mechanism
-    // This value tells us the the current position of
-    bit<32> index_per_generation_value = 0;
+    // variables for the buffering mechanism
+    bit<32> gen_index = 0;
     // This value tells us the position in the buffer where the first
     // packet of the generation is buffered
     bit<32> starting_index_of_generation = 0;
-    // This value tells us the generation of the packet
-    bit<32> gen = (bit<32>) hdr.rlnc.generation;
-    // This value tells us the generation size
-    bit<32> gen_size = GEN_SIZE;
     // This value tells us how many slots, in the buffers containing the symbols and coeffs,
     // were reserved
     bit<32> slots_reserved_value = 0;
     // This value tells us if a specific starting position of a generation, in the buffers containing the symbols and coeffs,
     // is reserved already for some other generation or not
     bit<1>  reserved_space_value = 0;
-	// Variable to carry around the final result of the arithmetic operations
-    bit<8> coded_result = 0;
-    // Variables to carry around the values of the resulting multiplications
-    bit<8> mult_result_1 = 0;
-    bit<8> mult_result_2 = 0;
 
-    // The LOG table
+    // variables for generation information
+    bit<32> gen_id = (bit<32>) hdr.rlnc.generation; // TODO: check what would be the proper size for the generation ID field
+    bit<32> gen_size = GEN_SIZE;
+
+	// Variable for results of the arithmetic operations
+    bit<GF_BYTES> mult_result_1 = 0;
+    bit<GF_BYTES> mult_result_2 = 0;
+    bit<GF_BYTES> lin_comb = 0;
+
+    // The LOG and ANTILOG tables
     register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-    // The ANTILOG table
     register<bit<GF_BYTES>>(509)       GF256_invlog;
 
     // Sets the port to forward the packet
@@ -102,22 +99,22 @@ control MyIngress(inout headers hdr,
     // Frees the space reserved by the current generation
     action action_free_buffer() {
         reserved_space.write(starting_index_of_generation, 0);
-        index_per_generation.write(gen, 0);
+        index_per_generation.write(gen_id, 0);
     }
 
     // Updates the index of the generation being coded each time a new packet count
     // from that specific generation arrives
     action action_update_buffer_index() {
-        index_per_generation_value = index_per_generation_value + 1;
-        index_per_generation.write(gen, index_per_generation_value);
+        gen_index = gen_index + 1;
+        index_per_generation.write(gen_id, gen_index);
     }
 
-    // Writes the symbols and coefficients to registers in the respective indexes
+    // Saving symbols and coefficients to registers
     action action_write() {
-        buf_c1.write(index_per_generation_value, hdr.coeff[0].coeff);
-        buf_c2.write(index_per_generation_value, hdr.coeff[1].coeff);
-        buf_s1.write(index_per_generation_value, hdr.msg[0].content);
-        buf_s2.write(index_per_generation_value, hdr.msg[1].content);
+        buf_c1.write(gen_index, hdr.coeff[0].coeff);
+        buf_c2.write(gen_index, hdr.coeff[1].coeff);
+        buf_s1.write(gen_index, hdr.msg[0].content);
+        buf_s2.write(gen_index, hdr.msg[1].content);
     }
 
     //Loads a coefficient and a symbol from the provided index to the first set of metadata
@@ -138,7 +135,7 @@ control MyIngress(inout headers hdr,
 
     // GF Addition Arithmetic Operation
     action action_GF_add(bit<GF_BYTES> a, bit<GF_BYTES> b) {
-        coded_result = (a ^ b);
+        lin_comb = (a ^ b);
     }
 
     // GF Multiplication Arithmetic Operation
@@ -188,7 +185,6 @@ control MyIngress(inout headers hdr,
         action_GF_add(mult_result_1, mult_result_2);
     }
 
-    // This action is called when the conditions for coding are met
     action action_code_packet() {
         // Initializing some variables to generate the random coefficients
         // with the minimum value being 0 and the maximum value being 2^n - 1
@@ -196,30 +192,28 @@ control MyIngress(inout headers hdr,
         bit<GF_BYTES> high = GF_MAX_VALUE;
         bit<GF_BYTES> rand_num1 = 0;
         bit<GF_BYTES> rand_num2 = 0;
-        // First we generate a number of random coefficients equal to the generation size
+        // generating a number of random coefficients equal to the generation size
         random(rand_num1, low, high);
         random(rand_num2, low, high);
 
-        // The packets stored in registers are loaded to metadata to perform
-        // the arithmetic operations, multiplication and addition
+        // Loading symbols and coefficients in metadata
         // The number of packets that need to be loaded is
         // equal to GEN_SIZE. Meaning loading all the packets from the following positions:
-        action_load_to_pkt_1(index_per_generation_value - 2);
-        action_load_to_pkt_2(index_per_generation_value - 1);
+        action_load_to_pkt_1(gen_index - 2);
+        action_load_to_pkt_2(gen_index - 1);
 
-        // Updating the packets symbols
+        // Coding and copying the symbols
+		// SALVO: can you the same coefficients for the different combinations?
         action_GF_arithmetic(meta.rlnc_metadata.p1_1, rand_num1, meta.rlnc_metadata.p2_1, rand_num2);
-        hdr.msg[0].content = coded_result;
-
+        hdr.msg[0].content = lin_comb;
         action_GF_arithmetic(meta.rlnc_metadata.p1_2, rand_num1, meta.rlnc_metadata.p2_2, rand_num2);
-        hdr.msg[1].content = coded_result;
+        hdr.msg[1].content = lin_comb;
 
-        // Updating the packets coefficients
+        // SALVO: if you code the coefficients too, then it means you are recoding
         action_GF_arithmetic(meta.rlnc_metadata.c1_1, rand_num1, meta.rlnc_metadata.c2_1, rand_num2);
-        hdr.coeff[0].coeff = coded_result;
-
+        hdr.coeff[0].coeff = lin_comb;
         action_GF_arithmetic(meta.rlnc_metadata.c1_2, rand_num1, meta.rlnc_metadata.c2_2, rand_num2);
-        hdr.coeff[1].coeff = coded_result;
+        hdr.coeff[1].coeff = lin_comb;
     }
 
     // Changes the type of the packet to a value of 3, which indicates that
@@ -238,49 +232,47 @@ control MyIngress(inout headers hdr,
     }
 
     apply {
+
+		// so far, the forwarding of a packet is only based on the ingress port
+		// TODO: make this behavior customazible from the control-plane. For ex., you may decided to either forward uncoded packets or drop them waiting for the current generation's buffer to fill
     	table_forward.apply();
+
         if(hdr.rlnc.isValid()) {
-            // First we start the process of choosing and loading the value of the buffer index
-            // We commence by getting the index appointed for the specific generation
-            index_per_generation.read(index_per_generation_value, gen);
-            // Then we get the number of slots that were already reserved by all generations so far
-            // to later use on the implementation of a circular buffer
+            // loading the buffer index for the current generation
+            index_per_generation.read(gen_index, gen_id);
+            // loading the number of slots that were already reserved by all generations so far (circular buffer to reuse space across diff generations)
             slots_reserved_buffer.read(slots_reserved_value, 0);
-            // The below if condition tells us that it's the first time seeing a particular generation
-            // So the index in which to store the first packet of the generations is decided by
-            // the result of the slots reserved modulo the size of the buffer
-            // This is done to implement a circular buffer so that the space can be reused.
-            if(index_per_generation_value == 0) {
+
+            // if it's the first time seeing a particular generation
+            // the index in which to store the first packet of this new generation is based on the buffer free space
+            if(gen_index == 0) {
                 starting_index_of_generation = slots_reserved_value % MAX_BUF_SIZE;
-                // We must check if the index to where the generation will start being buffered
-                // is free or not. If it's reserved already then that generation will not be
-                // coded, it will be simply forwarded.
+                // if the computed index it's reserved already then that generation will not be
+                // coded, yet simply forwarded.
                 reserved_space.read(reserved_space_value, starting_index_of_generation);
                 if(reserved_space_value == 1) {
                     // This returns assures that all of the following computation will
                     // not be executed, as is intended
                     return;
                 }
-                index_per_generation_value = starting_index_of_generation;
-                starting_index_of_generation_buffer.write(gen, starting_index_of_generation);
+                gen_index = starting_index_of_generation;
+                starting_index_of_generation_buffer.write(gen_id, starting_index_of_generation);
                 // We mark the slot of that starting index of the generation as reserved_space
                 // so that future generation won't be able to overwrite the current one
                 reserved_space.write(starting_index_of_generation, 1);
                 slots_reserved_buffer.write(0, slots_reserved_value + gen_size);
             }
-            // If the generation has already been seen, then the index used is the
-            // value stored in the index_per_generation
-            // So we write to the registers the packets contents using the loaded index_per_generation_value
+
+            // Using the generation index to save to the registers the packet contents
             action_write();
-            // Finally we increment by one the index_per_generation_value
+
+            // incrementing the gen_index
             action_update_buffer_index();
-            // The operation (index_per_generation_value-starting_index_of_generation) gives us the number of packets
-            // already buffered from the current generation, and if the result from that operation
-            // is equal to generation size, then it's time to code a packet
-            if(index_per_generation_value-starting_index_of_generation >= GEN_SIZE) {
-                // We code the packet with all the current packets stored in the buffer
+
+            // Coding iff num of stored symbols for the current generation is  equal to generation size
+            if(gen_index-starting_index_of_generation >= GEN_SIZE) {
                 action_code_packet();
-                // Since we coded the packet we change its type to TYPE_CODED_OR_RECODED
+                // updating packet type
                 action_systematic_to_coded();
             }
         }

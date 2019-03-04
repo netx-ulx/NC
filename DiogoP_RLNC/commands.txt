@@ -1,7 +1,9 @@
 table_add table_forward action_forward 1 => 2
 table_add table_forward action_forward 2 => 1
 
-table_add table_load_1  action_load_nc_metadata 2 => 1 0
+table_add table_enable_nc  action_load_nc_metadata 1 => 1 0
+table_add table_enable_nc  action_load_nc_metadata 2 => 1 0
+table_add table_enable_nc  action_load_nc_metadata 3 => 1 0
 
 register_write GF256_invlog 0 1
 register_write GF256_invlog 1 3

@@ -9,7 +9,7 @@
 #define GF_MOD 255
 #define GEN_SIZE 3
 #define PAY_SIZE 2
-#define BUF_SIZE 10
+#define MAX_BUF_SIZE 10
 
 const bit<16>  TYPE_CODING = 0x1234;
 typedef bit<48> macAddr_t;
