@@ -1,3 +1,10 @@
+/* Some tips to implement your circular buffer. To make it easier to implement, let's assume the following things (even though some are very stupid/inefficient choices):
+- when there is no space to store a new generation, drop the packet
+- information about the same generation (coeff and smbols) is always stored in consecutive cells
+- the gen_size is fixed and it's the same for all the processed generations
+Then, try to use a single register for all the symbols, likewise for the coefficients
+MEMO: you cannot use the mod operation since that is not supported, so try to implement a different mechanism to keep track of free positions in the buffer.
+*/
 // Payload buffers, one per symbol
 register<bit<GF_BYTES>>(MAX_BUF_SIZE)   buf_s1;
 register<bit<GF_BYTES>>(MAX_BUF_SIZE)   buf_s2;
