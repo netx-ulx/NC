@@ -5,11 +5,17 @@ import sys, os
 # The RLNC Header, holds the type of the packet.
 # A value of 2 means it's a DATA packet or a coded packet
 # A value of 3 means it's an ACK packet
-class P4RLNC(Packet):
-    name = "P4RLNC"
-    fields_desc = [BitField("Type", 1, 2),
-                   BitField("Symbols", 2,6),
-                   ByteField("Generation", 0)]
+class P4RLNC_OUT(Packet):
+    name = "P4RLNC_OUT"
+    fields_desc = [ByteField("Gen_ID", 1),
+                   ByteField("Gen_Size", 2),
+                   ByteField("Symbol_Size", 8),
+                   BitField("Field_Size", 8, 16)]
+
+class P4RLNC_IN(Packet):
+    name = "P4RLNC_IN"
+    fields_desc = [BitField("Type", 3, 2),
+                   BitField("Symbols", 2,6)]
 
 # The coefficients necessary for performing the linear combinations
 class Coefficient(Packet):
@@ -34,7 +40,7 @@ class CoefficientVector(Packet):
 
 
 
-bind_layers(Ether, P4RLNC, type=0x1234)
-bind_layers(P4RLNC, CoefficientVector)
+bind_layers(Ether, P4RLNC_OUT, type=0x0809)
+bind_layers(P4RLNC_OUT, P4RLNC_IN)
+bind_layers(P4RLNC_IN, CoefficientVector)
 bind_layers(CoefficientVector, SymbolVector)
-bind_layers(SymbolVector, Raw)

@@ -64,7 +64,7 @@ def column(matrix,i):
     return map(f,matrix)
 
 def handle_pkt(pkt):
-        if P4RLNC in pkt:
+        if P4RLNC_OUT in pkt:
             print "got a packet"
             global packets_received
             pkt.show2()

@@ -1,59 +1,55 @@
-/*************************************************************************
-*********************** H E A D E R S  ***********************************
-*************************************************************************/
+/*
+The header format implemented in this file follows the encoded symbols representation documented in the IETF draft at
+https://tools.ietf.org/id/draft-heide-nwcrg-rlnc-00.html
+Hence, any interpretation of the inner RLNC header definition below should refer to that document.
+*/
+
+
 #include "constants.p4"
+typedef bit<48> macAddr_t;
+typedef bit<8> byte_t;
 
-
-header ethernet_t {
-    macAddr_t dstAddr;
-    macAddr_t srcAddr;
-    bit<16>   etherType;
+header Ethernet_t{
+	macAddr_t dstAddr;
+	macAddr_t srcAddr;
+	bit<16> etherType;
 }
 
-header rlnc_t {
-    bit<2> type;
-    bit<6> symbols;
-    bit<8> generation;
-    bit<8> encoder_rank;
-}
-header coeff_t {
-    bit<GF_BYTES> coeff;
+// understand better if there might be the need to increase any of these fields size
+header Rlnc_out_t{
+	byte_t gen_id;
+	byte_t gen_size;
+	byte_t symbol_size;
+	bit<16> field_size;
 }
 
-header msg_t {
-    bit<GF_BYTES> content;
+header Rlnc_in_t{
+	bit<2> type;
+	bit<6> symbols;
+	byte_t encoderRank;
 }
 
-struct parser_metadata_t {
-    bit<8>  remaining_coeff;
-    bit<6>  remaining_msg;
+// SEED is used to generate the coding coefficient vector(s) using a pseudo-random number
+// generator for a compact form of the symbol representation
+header Seed_t{
+	byte_t seed;
 }
 
-
-
-//The metadata to manipulate the symbols and coefficients of the packets
-struct rlnc_metadata_t {
-    bit<GF_BYTES>   p1_1;
-    bit<GF_BYTES>   p1_2;
-
-    bit<GF_BYTES>   p2_1;
-    bit<GF_BYTES>   p2_2;
-
-    bit<GF_BYTES>   c1_1;
-    bit<GF_BYTES>   c1_2;
-
-    bit<GF_BYTES>   c2_1;
-    bit<GF_BYTES>   c2_2;
+// each symbol may contain its own coding vector which is made of size Encoding Rank coefficients
+header Coeffs_t{
+	bit<SYMBOL_SIZE> coef;
 }
 
-struct metadata {
-    parser_metadata_t       parser_metadata;
-    rlnc_metadata_t         rlnc_metadata;
+//  meant to contain the packet  payload over which {re-}coding operations are perfomed
+header Symbols_t{
+	bit<SYMBOL_SIZE> symbol;
 }
 
-struct headers {
-    ethernet_t          ethernet;
-    rlnc_t              rlnc;
-    coeff_t[GEN_SIZE]   coeff;
-    msg_t[PAY_SIZE]     msg;
+struct headers{
+	Ethernet_t ethernet;
+	Rlnc_out_t	rlnc_out;
+	Rlnc_in_t	rlnc_in;
+	Seed_t  seed;
+	Coeffs_t[MAX_COEFFS] coefficients;
+	Symbols_t[MAX_SYMBOLS] symbols;
 }

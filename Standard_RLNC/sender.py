@@ -61,8 +61,8 @@ def main():
         print "sending on interface {}".format(iface)
         print "=====================FIRST PACKET======================="
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-        pkt = pkt / P4RLNC()/ CoefficientVector(Encoder_Rank=2, coefficients=[Coefficient(coefficient=1), Coefficient(coefficient=0)])
-        pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol2)
+        pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN()/ CoefficientVector(Encoder_Rank=1, coefficients=[Coefficient(coefficient=0), Coefficient(coefficient=0)])
+        pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol)
         pkt = pkt / "Payload"
         sendp(pkt, iface=iface, verbose=False)
         pkt.show2()
@@ -75,7 +75,7 @@ def main():
         print "sending on interface {}".format(iface)
         "=====================SECOND PACKET======================="
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-        pkt = pkt / P4RLNC()/ CoefficientVector(Encoder_Rank=2, coefficients=[Coefficient(coefficient=0), Coefficient(coefficient=1)])
+        pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN() / CoefficientVector(Encoder_Rank=1, coefficients=[Coefficient(coefficient=0), Coefficient(coefficient=0)])
         pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol2)
         pkt = pkt / "Payload"
         sendp(pkt, iface=iface, verbose=False)
