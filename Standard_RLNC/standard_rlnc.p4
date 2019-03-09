@@ -83,6 +83,10 @@ control MyIngress(inout headers hdr,
 
     bit<8> is_reserved = 0;
 
+    action action_forward(bit<9> port) {
+      standard_metadata.egress_spec = port;
+    }
+
     // variables for generation information
     bit<8> gen_id = hdr.rlnc_out.gen_id;
     bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
@@ -95,14 +99,12 @@ control MyIngress(inout headers hdr,
     // Updates the index of the generation being coded each time a new packet count
     // from that specific generation arrives
     action action_update_buffer_index() {
-        gen_index = gen_index + 1;
+        gen_index = gen_index + numb_of_symbols;
         index_per_generation.write((bit<32>)gen_id, gen_index);
     }
 
     // Saving symbols and coefficients to registers
     action action_write() {
-        buf_coeffs.write(gen_index, hdr.coefficients[0].coef);
-        buf_coeffs.write(gen_index + 1, hdr.coefficients[1].coef);
         buf_symbols.write(gen_index, hdr.symbols[0].symbol);
         buf_symbols.write(gen_index + 1, hdr.symbols[1].symbol);
     }
@@ -126,17 +128,29 @@ control MyIngress(inout headers hdr,
             slots_reserved_value : exact;
             starting_index_of_generation : exact;
             is_reserved : exact;
+            numb_of_symbols : exact;
+            hdr.symbols[0].symbol : exact;
+            hdr.symbols[1].symbol : exact;
         }
         actions = {
             NoAction;
         }
     }
 
+    table table_forward {
+      key = {
+        standard_metadata.ingress_port: exact;
+      }
+      actions = {
+        action_forward;
+      }
+    }
+
     apply {
         // so far, the forwarding of a packet is only based on the ingress port
 		// TODO: make this behavior customazible from the control-plane. For ex., you may decided to either forward uncoded packets
         // or drop them waiting for the current generation's buffer to fill
-        if(hdr.rlnc_in.isValid()) {
+        if(hdr.rlnc_in.type == 1 && hdr.rlnc_in.isValid()) {
             // loading the buffer index for the current generation
             index_per_generation.read(gen_index, (bit<32>)gen_id);
             // loading the number of slots that were already reserved by all generations so far (circular buffer to reuse space across diff generations)
@@ -151,7 +165,9 @@ control MyIngress(inout headers hdr,
                 buf_symbols.read(is_reserved, starting_index_of_generation);
                 // iff the buffer overflows or the position in the given starting_index_of_generation is already
                 // occupied, then the packet will be dropped and further computation will be stopped
-                if(starting_index_of_generation + (numb_of_symbols*gen_size) > MAX_BUF_SIZE || is_reserved != 0) {
+
+                // debug table, does nothing, serves to check some values on the switch log file
+                if(starting_index_of_generation + gen_size > MAX_BUF_SIZE || is_reserved != 0) {
                     // This returns assures that all of the following computation will
                     // not be executed, as is intended
                     _drop();
@@ -159,16 +175,14 @@ control MyIngress(inout headers hdr,
                 }
                 gen_index = starting_index_of_generation;
                 starting_index_of_generation_buffer.write((bit<32>)gen_id, starting_index_of_generation);
-                slots_reserved_buffer.write(0, slots_reserved_value + (gen_size*numb_of_symbols));
+                slots_reserved_buffer.write(0, slots_reserved_value + gen_size);
             }
-
             // Using the generation index to save to the registers the packet symbols
             action_write();
 
             // incrementing the gen_index
             action_update_buffer_index();
 
-            // debug table, does nothing, serves to check some values on the switch log file
             table_debug.apply();
             // Coding iff num of stored symbols for the current generation is  equal to generation size
             if(gen_index-starting_index_of_generation >= GEN_SIZE) {
@@ -197,11 +211,20 @@ control MyEgress(inout headers hdr,
 	// Variable for results of the arithmetic operations
     bit<GF_BYTES> mult_result_1 = 0;
     bit<GF_BYTES> mult_result_2 = 0;
+    bit<GF_BYTES> mult_result_3 = 0;
+    bit<GF_BYTES> mult_result_4 = 0;
     bit<GF_BYTES> lin_comb = 0;
+
+    bit<GF_BYTES> rand_num1 = 0;
+    bit<GF_BYTES> rand_num2 = 0;
+    bit<GF_BYTES> rand_num3 = 0;
+    bit<GF_BYTES> rand_num4 = 0;
+
+    bit<8> numb_of_symbols = (bit<8>) hdr.rlnc_in.symbols;
 
     // The LOG and ANTILOG tables
     register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-    register<bit<GF_BYTES>>(509)       GF256_invlog;
+    register<bit<GF_BYTES>>(509)              GF256_invlog;
 
     // Frees the space reserved by the current generation
     action action_free_buffer() {
@@ -211,28 +234,25 @@ control MyEgress(inout headers hdr,
     }
     //Loads a coefficient and a symbol from the provided index to the first set of metadata
     action action_load_to_pkt_1(bit<8> idx) {
-        buf_coeffs.read(meta.rlnc_metadata.c1_1, (bit<32>)idx);
-        buf_coeffs.read(meta.rlnc_metadata.c1_2, (bit<32>)idx + 1);
-        buf_symbols.read(meta.rlnc_metadata.p1_1, (bit<32>)idx);
-        buf_symbols.read(meta.rlnc_metadata.p1_2, (bit<32>)idx + 1);
+        buf_symbols.read(meta.rlnc_metadata.p1_s1, (bit<32>)idx);
+        buf_symbols.read(meta.rlnc_metadata.p1_s2, (bit<32>)idx + 1);
 
     }
     //Loads a coefficient and a symbol from the provided index to the second set of metadata
     action action_load_to_pkt_2(bit<8> idx) {
-        buf_coeffs.read(meta.rlnc_metadata.c2_1, (bit<32>)idx);
-        buf_coeffs.read(meta.rlnc_metadata.c2_2, (bit<32>)idx + 1);
-        buf_symbols.read(meta.rlnc_metadata.p2_1, (bit<32>)idx);
-        buf_symbols.read(meta.rlnc_metadata.p2_2, (bit<32>)idx + 1);
+        buf_symbols.read(meta.rlnc_metadata.p2_s1, (bit<32>)idx);
+        buf_symbols.read(meta.rlnc_metadata.p2_s2, (bit<32>)idx + 1);
     }
 
     // GF Addition Arithmetic Operation
-    action action_GF_add(bit<GF_BYTES> a, bit<GF_BYTES> b) {
-        lin_comb = (a ^ b);
+    action action_GF_add(bit<GF_BYTES> a, bit<GF_BYTES> b, bit<GF_BYTES> c, bit<GF_BYTES> d) {
+        lin_comb = (a ^ b ^ c ^ d);
     }
 
     // GF Multiplication Arithmetic Operation
     // multiplication_result = antilog[log[a] + log[b]]
-    action action_GF_mult(bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2) {
+    action action_GF_mult(bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2,
+                          bit<GF_BYTES> x3, bit<GF_BYTES> y3, bit<GF_BYTES> x4, bit<GF_BYTES> y4) {
         bit<8> tmp_log_a = 0;
         bit<8> tmp_log_b = 0;
         bit<32> result = 0;
@@ -266,6 +286,26 @@ control MyEgress(inout headers hdr,
         if(x2 == 0 || y2 == 0) {
             mult_result_2 = 0;
         }
+
+        GF256_log.read(tmp_log_a, (bit<32>) x3);
+        GF256_log.read(tmp_log_b, (bit<32>) y3);
+        log_a = (bit<32>) tmp_log_a;
+        log_b = (bit<32>) tmp_log_b;
+        result = (log_a + log_b);
+        GF256_invlog.read(mult_result_3, result);
+        if(x3 == 0 || y3 == 0) {
+            mult_result_3 = 0;
+        }
+
+        GF256_log.read(tmp_log_a, (bit<32>) x4);
+        GF256_log.read(tmp_log_b, (bit<32>) y4);
+        log_a = (bit<32>) tmp_log_a;
+        log_b = (bit<32>) tmp_log_b;
+        result = (log_a + log_b);
+        GF256_invlog.read(mult_result_4, result);
+        if(x4 == 0 || y4 == 0) {
+            mult_result_4 = 0;
+        }
     }
 
     // The arithmetic operations needed for network coding are
@@ -273,9 +313,10 @@ control MyEgress(inout headers hdr,
     // by each random coefficient generated and then we add every
     // multiplication product, finally obtating the final result
     // the operation is the following: r = x1*y1 + x2*y2
-    action action_GF_arithmetic(bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2) {
-        action_GF_mult(x1,y1,x2,y2);
-        action_GF_add(mult_result_1, mult_result_2);
+    action action_GF_arithmetic(bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2,
+                                bit<GF_BYTES> x3, bit<GF_BYTES> y3, bit<GF_BYTES> x4, bit<GF_BYTES> y4) {
+        action_GF_mult(x1,y1,x2,y2,x3,y3,x4,y4);
+        action_GF_add(mult_result_1, mult_result_2, mult_result_3, mult_result_4);
     }
 
     action action_code_packet() {
@@ -283,43 +324,69 @@ control MyEgress(inout headers hdr,
         // with the minimum value being 0 and the maximum value being 2^n - 1
         bit<GF_BYTES> low = 0;
         bit<GF_BYTES> high = GF_MAX_VALUE;
-        bit<GF_BYTES> rand_num1 = 0;
-        bit<GF_BYTES> rand_num2 = 0;
         // generating a number of random coefficients equal to the generation size
         random(rand_num1, low, high);
         random(rand_num2, low, high);
+        random(rand_num3, low, high);
+        random(rand_num4, low, high);
 
         // Loading symbols and coefficients in metadata
         // The number of packets that need to be loaded is
         // equal to GEN_SIZE. Meaning loading all the packets from the following positions:
-        action_load_to_pkt_1(meta.clone_metadata.gen_index - 2);
-        action_load_to_pkt_2(meta.clone_metadata.gen_index - 1);
+        bit<8> aux_inc = 0;
+        action_load_to_pkt_1(meta.clone_metadata.starting_gen_index + (numb_of_symbols * aux_inc));
+        aux_inc = aux_inc + 1;
+        action_load_to_pkt_2(meta.clone_metadata.starting_gen_index + (numb_of_symbols * aux_inc));
 
         // Coding and copying the symbols
 		// SALVO: can you the same coefficients for the different combinations?
-        action_GF_arithmetic(meta.rlnc_metadata.p1_1, rand_num1, meta.rlnc_metadata.p2_1, rand_num2);
+        action_GF_arithmetic(meta.rlnc_metadata.p1_s1, rand_num1, meta.rlnc_metadata.p2_s1, rand_num2,
+                             meta.rlnc_metadata.p1_s2, rand_num3, meta.rlnc_metadata.p2_s2, rand_num4);
         hdr.symbols[0].symbol = lin_comb;
-        action_GF_arithmetic(meta.rlnc_metadata.p1_2, rand_num1, meta.rlnc_metadata.p2_2, rand_num2);
-        hdr.symbols[1].symbol = lin_comb;
-
-        // SALVO: if you code the coefficients too, then it means you are recoding
-        hdr.coefficients[0].coef = rand_num1;
-        hdr.coefficients[1].coef = rand_num2;
+        hdr.symbols[1].setInvalid();
     }
 
+    action action_add_coeff_header() {
+        hdr.coefficients.push_front(4);
+        hdr.coefficients[0].setValid();
+        hdr.coefficients[1].setValid();
+        hdr.coefficients[2].setValid();
+        hdr.coefficients[3].setValid();
+        hdr.coefficients[0].coef = rand_num1;
+        hdr.coefficients[1].coef = rand_num2;
+        hdr.coefficients[2].coef = rand_num3;
+        hdr.coefficients[3].coef = rand_num4;
+    }
     // Changes the type of the packet to a value of 3, which indicates that
     // the packet is either coded or recoded
     action action_systematic_to_coded() {
     	hdr.rlnc_in.type = TYPE_CODED_OR_RECODED;
     }
 
+    table table_debug {
+        key = {
+            meta.rlnc_metadata.p1_s1: exact;
+            meta.rlnc_metadata.p1_s2 : exact;
+            meta.rlnc_metadata.p2_s1 : exact;
+            meta.rlnc_metadata.p2_s2 : exact;
+            hdr.symbols[0].symbol : exact;
+            hdr.symbols[1].symbol : exact;
+        }
+        actions = {
+            NoAction;
+        }
+    }
+
     apply {
-        if(hdr.rlnc_in.isValid()) {
+        if(hdr.rlnc_in.type == 1 && hdr.rlnc_in.isValid()) {
             if(meta.clone_metadata.gen_index - meta.clone_metadata.starting_gen_index >= GEN_SIZE) {
                 // We code the packet with all the current packets stored in the buffer
                 action_code_packet();
+
+                action_add_coeff_header();
                 // Since we coded the packet we change its type to TYPE_CODED_OR_RECODED
                 action_systematic_to_coded();
+                table_debug.apply();
             }
         }
     }

@@ -4,7 +4,7 @@
         "h2"
     ],
     "switches": {
-        "s1": { "cli_input" : "commands1.txt" }
+        "s1": { "cli_input" : "commands.txt" }
     },
     "links": [
         ["h1", "s1"], ["s1", "h2"]

@@ -34,7 +34,7 @@ parser MyParser(packet_in pkt, out headers hdr, inout metadata meta, inout stand
 
 	state parse_seed_or_coeffs{
         meta.symbols = hdr.rlnc_in.symbols;
-        meta.coeffs =  hdr.rlnc_in.encoderRank;
+        meta.coeffs =  ((bit<16>) hdr.rlnc_in.symbols) * ((bit<16>) hdr.rlnc_in.encoderRank);
 		transition select(hdr.rlnc_in.type) {
 			1: parse_symbols;
 			2: parse_seed;
