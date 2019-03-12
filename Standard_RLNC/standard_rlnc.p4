@@ -85,6 +85,7 @@ control MyIngress(inout headers hdr,
     // variables for generation information
     bit<8> gen_id = hdr.rlnc_out.gen_id;
     bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
+    bit<32> encoder_rank = (bit<32>) hdr.rlnc_in.encoderRank;
 
     action action_clone(bit<16> group) {
         standard_metadata.mcast_grp = group;
@@ -167,6 +168,8 @@ control MyIngress(inout headers hdr,
 		// TODO: make this behavior customazible from the control-plane. For ex., you may decided to either forward uncoded packets
         // or drop them waiting for the current generation's buffer to fill
         if(hdr.rlnc_in.isValid()) {
+            // Uncomment the following line to enable the sending of systematic symbols as well
+            // table_forward.apply();
             if((hdr.rlnc_in.type == 1 || hdr.rlnc_in.type == 3)) {
                 // loading the buffer index for the current generation
                 symbol_index_per_generation.read(gen_symbol_index, (bit<32>)gen_id);
@@ -216,7 +219,7 @@ control MyIngress(inout headers hdr,
                     starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, gen_coeff_index);
                 }
                 // incrementing the number of slots reserved
-                coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (hdr.rlnc_in.encoderRank*gen_size));
+                coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
                 // saving the symbol's coefficients to the register
                 action_buffer_coefficients();
                 // updating the coeff index
