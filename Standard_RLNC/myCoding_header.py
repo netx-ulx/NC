@@ -7,7 +7,7 @@ import sys, os
 # A value of 3 means it's an ACK packet
 class P4RLNC_OUT(Packet):
     name = "P4RLNC_OUT"
-    fields_desc = [ByteField("Gen_ID", 1),
+    fields_desc = [ByteField("Gen_ID", 6),
                    ByteField("Gen_Size", 4),
                    ByteField("Symbol_Size", 8),
                    BitField("Field_Size", 8, 16)]

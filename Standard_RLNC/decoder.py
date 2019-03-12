@@ -97,8 +97,8 @@ def handle_pkt(pkt):
                 original_symbols.append(solve1)
                 original_symbols_matrix = genericmatrix.GenericMatrix((4,1),add=XOR,mul=AND,sub=XOR,div=DIV)
                 original_symbols_matrix.SetRow(0, map(int,column(original_symbols,0)))
-                original_symbols_matrix.SetRow(1, map(int,column(original_symbols,2)))
-                original_symbols_matrix.SetRow(2, map(int,column(original_symbols,1)))
+                original_symbols_matrix.SetRow(1, map(int,column(original_symbols,1)))
+                original_symbols_matrix.SetRow(2, map(int,column(original_symbols,2)))
                 original_symbols_matrix.SetRow(3, map(int,column(original_symbols,3)))
                 print original_symbols_matrix
                 reset_values()
