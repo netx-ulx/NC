@@ -167,36 +167,47 @@ control MyIngress(inout headers hdr,
         // so far, the forwarding of a packet is only based on the ingress port
 		// TODO: make this behavior customazible from the control-plane. For ex., you may decided to either forward uncoded packets
         // or drop them waiting for the current generation's buffer to fill
+
         if(hdr.rlnc_in.isValid()) {
-            // Uncomment the following line to enable the sending of systematic symbols as well
+
+            // SALVO: again, make this customazible from the control-plane!!!  Uncomment the following line to enable the sending of systematic symbols as well
             // table_forward.apply();
+
             if((hdr.rlnc_in.type == 1 || hdr.rlnc_in.type == 3)) {
+
                 // loading the buffer index for the current generation
                 symbol_index_per_generation.read(gen_symbol_index, (bit<32>)gen_id);
+
                 // loading the number of slots that were already reserved by all generations so far (circular buffer to reuse space across diff generations)
                 symbol_slots_reserved_buffer.read(symbol_slots_reserved_value, 0);
+
                 // loading the starting index of the generation
                 starting_symbol_index_of_generation_buffer.read(starting_symbol_index_of_generation, (bit<32>) gen_id);
-                // if it's the first time seeing a particular generation
-                // the index in which to store the first packet of this new generation is based on the buffer free space
+
+                // the storing of new generation is based on the free buffer space
                 if(gen_symbol_index == 0) {
+
+					// SALVO: I thought the modulo was not supported.
                     starting_symbol_index_of_generation = symbol_slots_reserved_value % MAX_BUF_SIZE;
-                    // if the computed index it's reserved already then that generation will not be
-                    // coded, instead it will be dropped
+
+                    // checking space availability at the computed index
                     buf_symbols.read(is_reserved, starting_symbol_index_of_generation);
-                    // iff the buffer overflows or the position in the given starting_symbol_index_of_generation is already
-                    // occupied, then the packet will be dropped and further computation will be stopped
+
+					// SALVO: it is correct to right the value here, before checking that space can be used?
                     starting_symbol_index_of_generation_buffer.write((bit<32>)gen_id, starting_symbol_index_of_generation);
+
+                    // if buffer overflows or starting_symbol_index_of_generation is already allocated then the packet will be dropped
                     if(starting_symbol_index_of_generation + gen_size > MAX_BUF_SIZE || is_reserved != 0) {
-                        // This returns assures that all of the following computation will
-                        // not be executed, as is intended
                         _drop();
                         return;
                     }
+
                     gen_symbol_index = starting_symbol_index_of_generation;
+
                     // incrementing the number of slots reserved
                     symbol_slots_reserved_buffer.write(0, symbol_slots_reserved_value + gen_size);
                 }
+
                 // Using the generation index to save to the registers the packet symbols
                 action_buffer_symbols();
 
@@ -204,41 +215,54 @@ control MyIngress(inout headers hdr,
                 action_update_gen_symbol_index();
 
             }
+
+			// processing of either coded or re-coded packets
             if(hdr.rlnc_in.type == 3) {
+
                 //loading the coeff buffer index for the generation
                 coeff_index_per_generation.read(gen_coeff_index, (bit<32>) gen_id);
+
                 //loading the number of slots that are already reserved
                 coeff_slots_reserved_buffer.read(coeff_slots_reserved_value, 0);
+
                 //loading the starting index of the generation in the coeff buffer
                 starting_coeff_index_of_generation_buffer.read(starting_coeff_index_of_generation, (bit<32>) gen_id);
-                //iff condition to check if its the first time seing a generation
+
+                //if condition to check if its the first time seing a generation
+				// SALVO: why do we not reuse here the previous check on "gen_symbol_index == 0"?
                 if(gen_coeff_index == 0) {
-                    //assigning the index
+
                     gen_coeff_index = coeff_slots_reserved_value % MAX_BUF_SIZE;
                     //saving the starting index for future use
                     starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, gen_coeff_index);
+
                 }
+
                 // incrementing the number of slots reserved
                 coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
+
                 // saving the symbol's coefficients to the register
                 action_buffer_coefficients();
-                // updating the coeff index
+
                 action_update_gen_coeff_index();
             }
+
             // Coding iff num of stored symbols for the current generation is  equal to generation size
             if(gen_symbol_index-starting_symbol_index_of_generation >= GEN_SIZE) {
-                // some values need to be known in the egress, so they are copied to metadata
-                // they are used to:
+
+                // values for egress processing are here copied to metadata, used to:
                 // -know when its time to code
                 // -help loading from the correct index the values of the symbols and coeffs stored in the registers
                 meta.clone_metadata.gen_symbol_index = (bit<8>) gen_symbol_index;
                 meta.clone_metadata.starting_gen_symbol_index = (bit<8>)starting_symbol_index_of_generation;
                 meta.clone_metadata.starting_gen_coeff_index = (bit<8>) starting_coeff_index_of_generation;
+
                 // applying the clone mechanism through the use of multicast
                 // this is achieved by multicasting packets to the same port
                 table_clone.apply();
             }
-            // debug table, does nothing, serves to check some values on the switch log file
+
+            // debug table meant to print some values to the switch log file
             table_debug.apply();
         }
     }
@@ -292,7 +316,8 @@ control MyEgress(inout headers hdr,
         buf_symbols.write(0, 0);
         symbol_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
     }
-    // Loads gen_size symbols to metadata to use in linear combinations
+
+    // Loading gen_size symbols to metadata
     // CONFIGURABLE: changes depending on the generation size, number of reads = hdr.rlnc_out.gen_size
     action action_load_symbols(bit<8> idx) {
         buf_symbols.read(meta.rlnc_metadata.s1, (bit<32>)idx);
@@ -301,7 +326,8 @@ control MyEgress(inout headers hdr,
         buf_symbols.read(meta.rlnc_metadata.s4, (bit<32>)idx + 3);
 
     }
-    //Loads gen_size coefficients to variables to use in the linear combinations
+
+    // Loading gen_size coefficients to variables
     // CONFIGURABLE: changes depending on the generation size and the number of coded symbols we have in a packet so, number of reads = hdr.rlnc_out.gen_size*hdr.rlnc_in.symbols
     action action_load_coeffs(bit<8> idx) {
         buf_coeffs.read(coef_1, (bit<32>) idx);
@@ -317,12 +343,12 @@ control MyEgress(inout headers hdr,
         hdr.symbols[1].setInvalid();
     }
 
-    // GF Addition Arithmetic Operation
+    // GF Addition Op
     action action_GF_add(bit<GF_BYTES> a, bit<GF_BYTES> b, bit<GF_BYTES> c, bit<GF_BYTES> d) {
         lin_comb = (a ^ b ^ c ^ d);
     }
 
-    // GF Multiplication Arithmetic Operation
+    // GF Multiplication Op
     // multiplication_result = antilog[log[a] + log[b]]
     // r = x1*y1 + x2*y2 + x3*y3 + x4*y4
     // CONFIGURABLE: parameters and multiplications increase with the generation size
