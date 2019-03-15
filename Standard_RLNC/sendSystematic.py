@@ -51,39 +51,30 @@ def utf8len(s):
     return len(s.encode('utf-8'))
 
 
+number_of_packets = 2
 def main():
 
     iface = get_if()[0]
 
     while True:
-        symbol1 = raw_input('Enter the first symbol of the first packet to be sent\n')
-        symbol2 = raw_input('Enter the second symbol of the first packet to be sent\n')
+        j = 0;
+        for i in range(0,number_of_packets):
+            symbol1 = raw_input('Enter the first symbol of the ' + str(i) +' packet to be sent\n')
+            symbol2 = raw_input('Enter the second symbol of the ' + str(i) +' packet to be sent\n')
 
-        symbol1 = int(symbol1)
-        symbol2 = int(symbol2)
-        print "sending on interface {}".format(iface)
-        print "=====================FIRST PACKET======================="
-        pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-        pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN(Type=1, Symbols=2, Encoder_Rank=0)
-        pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol2)
-        sendp(pkt, iface=iface, verbose=False)
-        pkt.show2()
-        v.SetRow(0,[symbol1])
-        v.SetRow(1,[symbol2])
-
-        symbol1 = raw_input('Enter the first symbol of the second packet to be sent\n')
-        symbol2 = raw_input('Enter the second symbol of the second packet to be sent\n')
-        symbol1 = int(symbol1)
-        symbol2 = int(symbol2)
-        print "sending on interface {}".format(iface)
-        "=====================SECOND PACKET======================="
-        pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-        pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN(Type=1, Symbols=2, Encoder_Rank=0)
-        pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol2)
-        sendp(pkt, iface=iface, verbose=False)
-        pkt.show2()
-        v.SetRow(2,[symbol1])
-        v.SetRow(3,[symbol2])
+            symbol1 = int(symbol1)
+            symbol2 = int(symbol2)
+            print "sending on interface {}".format(iface)
+            print "=====================FIRST PACKET======================="
+            pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
+            pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN(Type=1, Symbols=2, Encoder_Rank=0)
+            pkt = pkt / SymbolVector(symbol1=symbol1, symbol2=symbol2)
+            sendp(pkt, iface=iface, verbose=False)
+            pkt.show2()
+            v.SetRow(j,[symbol1])
+            j = j + 1
+            v.SetRow(j,[symbol2])
+            j = j + 1
 
         print "ORIGINAL SYMBOLS"
         print v
