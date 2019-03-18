@@ -23,6 +23,9 @@ import numpy as np
 from numpy.linalg import inv
 from myCoding_header import *
 
+gen_size = 4
+number_of_symbols = 2
+
 payload_matrix = []
 coefficient_matrix_s1 = []
 coefficient_matrix_s2 = []
@@ -33,7 +36,7 @@ F = ffield.FField(8,gen=0x11b, useLUT=0)
 XOR = lambda x,y: int(x)^int(y)
 AND = lambda x,y: F.Multiply(int(x),int(y))
 DIV = lambda x,y: F.Divide(int(x),int(y))
-coefficient_matrix_s1 = genericmatrix.GenericMatrix((4,4),add=XOR,mul=AND,sub=XOR,div=DIV)
+coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
 # The symbols to be coded
 class CodedSymbol(Packet):
    fields_desc = [ByteField("coded_symbol", 1)]
@@ -65,7 +68,7 @@ def reset_values():
     original_symbols = []
     packets_received = 0
     F = ffield.FField(8,gen=0x11b, useLUT=0)
-    coefficient_matrix_s1 = genericmatrix.GenericMatrix((4,4),add=XOR,mul=AND,sub=XOR,div=DIV)
+    coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
 
 def column(matrix,i):
     f = itemgetter(i)
@@ -90,16 +93,14 @@ def handle_pkt(pkt):
             print payload_matrix_np
 
             packets_received += 1
-            if packets_received == 4:
+            if packets_received == gen_size:
                 b = map(int,column(payload_matrix,0))
                 solve1 = coefficient_matrix_s1.Solve(b)
                 print "=======ORIGINAL SYMBOLS======="
                 original_symbols.append(solve1)
-                original_symbols_matrix = genericmatrix.GenericMatrix((4,1),add=XOR,mul=AND,sub=XOR,div=DIV)
-                original_symbols_matrix.SetRow(0, map(int,column(original_symbols,0)))
-                original_symbols_matrix.SetRow(1, map(int,column(original_symbols,1)))
-                original_symbols_matrix.SetRow(2, map(int,column(original_symbols,2)))
-                original_symbols_matrix.SetRow(3, map(int,column(original_symbols,3)))
+                original_symbols_matrix = genericmatrix.GenericMatrix((gen_size,1),add=XOR,mul=AND,sub=XOR,div=DIV)
+                for i in range(0, gen_size):
+                    original_symbols_matrix.SetRow(i, map(int,column(original_symbols,i)))
                 print original_symbols_matrix
                 reset_values()
 
