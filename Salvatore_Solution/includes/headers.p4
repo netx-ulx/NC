@@ -24,12 +24,20 @@ header Rlnc_out_t{
 	byte_t gen_size;
 	byte_t symbol_size;
 	bit<16> field_size;
+	bit<2> eRank_size;
 }
 
 header Rlnc_in_t{
 	bit<2> type;
 	bit<6> symbols;
-	byte_t encoderRank;
+}
+
+header SmallEncoderRanK_t{
+	bit<8> encoderRank;
+}
+
+header BigEncoderRanK_t{
+	bit<16> encoderRank;
 }
 
 // SEED is used to generate the coding coefficient vector(s) using a pseudo-random number
@@ -52,7 +60,9 @@ struct headers{
 	Ethernet_t ethernet;
 	Rlnc_out_t	rlnc_out;
 	Rlnc_in_t	rlnc_in;
+	SmallEncoderRanK_t	smallEncoderRank;
+	BigEncoderRanK_t	bigEncoderRank;
 	Seed_t  seed;
 	Coeffs_t[MAX_COEFFS] coefficients;
-	Symbols_t[MAX_SYMBOLS] symbols;
+	Symbols_t[GEN_SIZE] symbols;
 }

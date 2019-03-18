@@ -12,19 +12,34 @@ parser MyParser(packet_in pkt, out headers hdr, inout metadata meta, inout stand
 	state parse_ethernet{
 		pkt.extract(hdr.ethernet);
 		transition select(hdr.ethernet.etherType) {
-			TYPE_RLNC: parse_rlnc_out;
+			TYPE_RLNC: parse_rlnc;
 			default: accept;
 		}
 	}
 
 
-	state parse_rlnc_out{
+	state parse_rlnc{
 		pkt.extract(hdr.rlnc_out);
-		transition  parse_rlnc_in;
+		pkt.extract(hdr.rlnc_in);
+		transition select(hdr.rlnc_in.symbols) {
+			1:  parse_rlnc_small_encoder;
+			2:  parse_rlnc_big_encoder;
+		}
 	}
 
-	state parse_rlnc_in{
-		pkt.extract(hdr.rlnc_in);
+	state parse_rlnc_small_encoder{
+		pkt.extract(hdr.smallEncoderRank);
+        meta.coeffs =  ((bit<16>) hdr.rlnc_in.symbols) * ((bit<16>) hdr.smallEncoderRank.encoderRank);
+		transition check_symbols;
+	}
+
+	state parse_rlnc_big_encoder{
+		pkt.extract(hdr.bigEncoderRank);
+        meta.coeffs =  ((bit<16>) hdr.rlnc_in.symbols) * ( hdr.bigEncoderRank.encoderRank);
+		transition check_symbols;
+	}
+
+	state check_symbols{
 		// if symbols contains zero, then the packet does not contain any symbol and parsing must stop here
 		transition select(hdr.rlnc_in.symbols) {
 			0: accept;
@@ -34,7 +49,6 @@ parser MyParser(packet_in pkt, out headers hdr, inout metadata meta, inout stand
 
 	state parse_seed_or_coeffs{
         meta.symbols = hdr.rlnc_in.symbols;
-        meta.coeffs =  ((bit<16>) hdr.rlnc_in.symbols) * ((bit<16>) hdr.rlnc_in.encoderRank);
 		transition select(hdr.rlnc_in.type) {
 			1: parse_symbols;
 			2: parse_seed;
