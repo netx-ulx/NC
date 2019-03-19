@@ -4,7 +4,7 @@ register<bit<GF_BYTES>>(MAX_BUF_SIZE)   buf_symbols;
 // Coefficient Buffers
 register<bit<GF_BYTES>>(MAX_BUF_SIZE)   buf_coeffs;
 
-//Stores and Dictates the index in which a payload from a specific generation should be stored to
+//Stores and Dictates the index in which a symbol from a specific generation should be stored to
 register<bit<32>>(10) symbol_index_per_generation;
 
 //Stores and Dictates the index in which a coefficient from a specific generation should be stored to

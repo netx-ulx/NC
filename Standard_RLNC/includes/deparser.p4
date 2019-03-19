@@ -7,7 +7,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.rlnc_out);
         packet.emit(hdr.rlnc_in);
-        packet.emit(hdr.seed);
+        //packet.emit(hdr.seed);
         packet.emit(hdr.coefficients);
         packet.emit(hdr.symbols);
     }

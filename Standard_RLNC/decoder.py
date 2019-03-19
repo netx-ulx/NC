@@ -20,6 +20,7 @@ from scapy.all import IP, TCP, UDP, Raw, Ether
 from scapy.layers.inet import _IPOption_HDR
 import binascii
 import numpy as np
+from random import randint
 from numpy.linalg import inv
 from myCoding_header import *
 
@@ -29,7 +30,9 @@ number_of_symbols = 2
 payload_matrix = []
 coefficient_matrix_s1 = []
 coefficient_matrix_s2 = []
-packets_received = 0
+packet_number = 0
+coeff_rows = 0
+packets_to_drop_list = []
 original_symbols = []
 original_symbols_2 = []
 F = ffield.FField(8,gen=0x11b, useLUT=0)
@@ -59,14 +62,14 @@ def get_if():
 
 
 def reset_values():
-    global packets_received
+    global packet_number
     global payload_matrix
     global original_symbols
     global coefficient_matrix_s1
     payload_matrix = []
     coefficient_matrix_s1 = []
     original_symbols = []
-    packets_received = 0
+    packet_number = 0
     F = ffield.FField(8,gen=0x11b, useLUT=0)
     coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
 
@@ -77,24 +80,31 @@ def column(matrix,i):
 def handle_pkt(pkt):
         if P4RLNC_OUT in pkt:
             print "got a packet"
-            global packets_received
+            global packet_number
+            global coeff_rows
+            global packets_to_drop_list
+            print packet_number
+            print packets_to_drop_list
+            if packet_number in packets_to_drop_list:
+                packet_number += 1
+                return
             pkt.show2()
-            symbol1 = str(pkt.getlayer(CodedSymbol).coded_symbol)
-            coef1 = str(pkt.getlayer(CoefficientVector).coef1)
-            coef2 = str(pkt.getlayer(CoefficientVector).coef2)
-            coef3 = str(pkt.getlayer(CoefficientVector).coef3)
-            coef4 = str(pkt.getlayer(CoefficientVector).coef4)
-            coefficient_matrix_s1.SetRow(packets_received, [coef1, coef2, coef3, coef4])
+            symbol1 = int(pkt.getlayer(CodedSymbol).coded_symbol)
+            coef1 = int(pkt.getlayer(CoefficientVector).coef1)
+            coef2 = int(pkt.getlayer(CoefficientVector).coef2)
+            coef3 = int(pkt.getlayer(CoefficientVector).coef3)
+            coef4 = int(pkt.getlayer(CoefficientVector).coef4)
+            coefficient_matrix_s1.SetRow(coeff_rows, [coef1, coef2, coef3, coef4])
             payload_matrix.append([symbol1])
-            payload_matrix_np = np.array(payload_matrix, dtype="float")
             print "=======RANDOM COEFFICIENT MATRIX======="
             print coefficient_matrix_s1
             print "=======ENCODED_SYNBOLS======="
-            print payload_matrix_np
+            print payload_matrix
 
-            packets_received += 1
-            if packets_received == gen_size:
-                b = map(int,column(payload_matrix,0))
+            packet_number += 1
+            coeff_rows += 1
+            if coeff_rows == 4:
+                b = column(payload_matrix,0)
                 solve1 = coefficient_matrix_s1.Solve(b)
                 print "=======ORIGINAL SYMBOLS======="
                 original_symbols.append(solve1)
@@ -104,9 +114,14 @@ def handle_pkt(pkt):
                 print original_symbols_matrix
                 reset_values()
 
+def select_random_packets_to_drop(n):
+    global packets_to_drop_list
+    packets_to_drop_list = random.sample(range(gen_size), n)
+
 def main():
     ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
     iface = ifaces[0]
+    select_random_packets_to_drop(0)
     sys.stdout.flush()
     sniff(iface = iface,
           prn = lambda x: handle_pkt(x))
