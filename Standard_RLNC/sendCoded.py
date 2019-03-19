@@ -2,7 +2,7 @@
 
 """
 This python script is used to generate and send packets
-through the use of the scapy package. It sends 3 packets
+through the use of the scapy package. It sends 2 packets
 as an example for this exercise. Furthermore it arranges
 the symbols and the coefficients sent in matrices to facilitate
 the visualization of the exercise for the user
@@ -17,8 +17,6 @@ from pyfinite import ffield
 from pyfinite import genericmatrix
 from scapy.all import sendp, send, get_if_list, get_if_hwaddr
 from scapy.all import Packet
-from scapy.all import Ether, StrFixedLenField, XByteField, IntField, ShortField, BitField, ByteField
-from scapy.all import IP, UDP
 from scapy.all import bind_layers
 from myCoding_header import *
 
@@ -57,7 +55,7 @@ def utf8len(s):
 def main():
 
         iface = get_if()[0]
-        
+
         symbol1 = 249
         print "sending on interface {}".format(iface)
         print "=====================FIRST PACKET======================="
@@ -83,7 +81,7 @@ def main():
 
         symbol1 = 74
         print "sending on interface {}".format(iface)
-        print "=====================FIRST PACKET======================="
+        print "=====================THIRD PACKET======================="
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
         pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN(Type=3, Symbols=1, Encoder_Rank=4)
         pkt = pkt / CoefficientVector(coef1=52, coef2=84, coef3=211, coef4=46)
@@ -94,7 +92,7 @@ def main():
 
         symbol1 = 114
         print "sending on interface {}".format(iface)
-        "=====================SECOND PACKET======================="
+        "=====================FOURTH PACKET======================="
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
         pkt = pkt / P4RLNC_OUT()/ P4RLNC_IN(Type=3, Symbols=1, Encoder_Rank=4)
         pkt = pkt / CoefficientVector(coef1=153, coef2=41, coef3=44, coef4=248)
