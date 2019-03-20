@@ -2,7 +2,7 @@
 
 """
 This python script is used to generate and send packets
-through the use of the scapy package. It sends 3 packets
+through the use of the scapy package. It sends 2 packets
 as an example for this exercise. Furthermore it arranges
 the symbols and the coefficients sent in matrices to facilitate
 the visualization of the exercise for the user
@@ -17,8 +17,6 @@ from pyfinite import ffield
 from pyfinite import genericmatrix
 from scapy.all import sendp, send, get_if_list, get_if_hwaddr
 from scapy.all import Packet
-from scapy.all import Ether, StrFixedLenField, XByteField, IntField, ShortField, BitField, ByteField
-from scapy.all import IP, UDP
 from scapy.all import bind_layers
 from myCoding_header import *
 
