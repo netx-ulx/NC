@@ -73,7 +73,7 @@ def main():
             print "sending on interface {}".format(iface)
             print "=====================FIRST PACKET======================="
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-            pkt = pkt / P4RLNC_OUT(Gen_Size=gen_size)/ P4RLNC_IN(Type=1, Symbols=2) / CoefficientVector()
+            pkt = pkt / P4RLNC_OUT(Gen_Size=gen_size)/ P4RLNC_IN(Type=1, Symbols=number_of_symbols) / CoefficientVector()
             pkt = pkt / SymbolVector(symbols_vector=symbols_vector)
             sendp(pkt, iface=iface, verbose=False)
             pkt.show2()

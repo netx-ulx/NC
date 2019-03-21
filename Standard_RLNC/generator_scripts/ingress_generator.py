@@ -64,7 +64,7 @@ def generateIngress(gen_size, number_of_symbols):
         // number of buffered symbols = hdr.rlnc_in.symbols
         action action_buffer_symbols() {\n''')
     for i in range(0,number_of_symbols):
-            f.write("       buf_symbols.write(gen_symbol_index + " + str(i) + ", hdr.symbols["+str(i)+"].symbol);\n")
+            f.write("            buf_symbols.write(gen_symbol_index + " + str(i) + ", hdr.symbols["+str(i)+"].symbol);\n")
 
     f.write('''
         }
@@ -74,7 +74,7 @@ def generateIngress(gen_size, number_of_symbols):
         // number of buffered coefficients = hdr.rlnc_out.gen_size
         action action_buffer_coefficients() {\n''')
     for i in range(0, gen_size):
-            f.write("       buf_coeffs.write(gen_coeff_index + " + str(i) + ", hdr.coefficients["+str(i)+"].coef);\n")
+            f.write("            buf_coeffs.write(gen_coeff_index + " + str(i) + ", hdr.coefficients["+str(i)+"].coef);\n")
     f.write('''
         }
 
