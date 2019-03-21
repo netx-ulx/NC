@@ -1,4 +1,9 @@
+#!/usr/bin/env python
+import os.path
 
+def generateIngress(gen_size, number_of_symbols):
+    f = open("/home/p4/Desktop/tutorials/exercises/Standard_RLNC_V3/includes/ingress.p4", "w+")
+    f.write('''
     #include "registers.p4"
     /*************************************************************************
     **************  I N G R E S S   P R O C E S S I N G   *******************
@@ -57,21 +62,20 @@
         // Saving symbols to registers
         // CONFIGURABLE: changes depending on the number of symbols in a packet
         // number of buffered symbols = hdr.rlnc_in.symbols
-        action action_buffer_symbols() {
-       buf_symbols.write(gen_symbol_index + 0, hdr.symbols[0].symbol);
-       buf_symbols.write(gen_symbol_index + 1, hdr.symbols[1].symbol);
+        action action_buffer_symbols() {\n''')
+    for i in range(0,number_of_symbols):
+            f.write("       buf_symbols.write(gen_symbol_index + " + str(i) + ", hdr.symbols["+str(i)+"].symbol);\n")
 
+    f.write('''
         }
 
         // Saves coefficients to registers
         // CONFIGURABLE: changes depending on the GEN_SIZE
         // number of buffered coefficients = hdr.rlnc_out.gen_size
-        action action_buffer_coefficients() {
-       buf_coeffs.write(gen_coeff_index + 0, hdr.coefficients[0].coef);
-       buf_coeffs.write(gen_coeff_index + 1, hdr.coefficients[1].coef);
-       buf_coeffs.write(gen_coeff_index + 2, hdr.coefficients[2].coef);
-       buf_coeffs.write(gen_coeff_index + 3, hdr.coefficients[3].coef);
-
+        action action_buffer_coefficients() {\n''')
+    for i in range(0, gen_size):
+            f.write("       buf_coeffs.write(gen_coeff_index + " + str(i) + ", hdr.coefficients["+str(i)+"].coef);\n")
+    f.write('''
         }
 
         action my_drop() {
@@ -214,4 +218,4 @@
             }
         }
     }
-    
+    ''')

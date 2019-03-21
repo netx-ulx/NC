@@ -10,7 +10,7 @@
 //Value used in the generation of the random coefficients
 #define GF_MAX_VALUE 255
 //The size of the generation
-#define GEN_SIZE 4
+#define GEN_SIZE 6
 //The maximum size of the buffer that store the packets contents
 #define MAX_BUF_SIZE 256
 

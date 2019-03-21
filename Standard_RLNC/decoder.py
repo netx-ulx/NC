@@ -17,9 +17,8 @@ from scapy.all import Packet
 import numpy as np
 from random import randint
 from myCoding_header import *
+from argparse import ArgumentParser
 
-gen_size = 4
-number_of_symbols = 2
 
 payload_matrix = []
 coefficient_matrix_s1 = []
@@ -31,15 +30,17 @@ F = ffield.FField(8,gen=0x11b, useLUT=0)
 XOR = lambda x,y: int(x)^int(y)
 AND = lambda x,y: F.Multiply(int(x),int(y))
 DIV = lambda x,y: F.Divide(int(x),int(y))
-coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
 
-class CodedSymbol(Packet):
-   fields_desc = [ByteField("coded_symbol", 1)]
-   
+class CodedSymbolVector(Packet):
+   fields_desc = [FieldListField("coded_symbols_vector", None, ByteField("coded_symbol",0))]
+
 bind_layers(Ether, P4RLNC_OUT, type=0x0809)
 bind_layers(P4RLNC_OUT, P4RLNC_IN)
 bind_layers(P4RLNC_IN, CoefficientVector)
-bind_layers(CoefficientVector, CodedSymbol)
+bind_layers(CoefficientVector, CodedSymbolVector)
+
+
+
 
 def get_if():
     ifs=get_if_list()
@@ -66,6 +67,18 @@ def reset_values():
     F = ffield.FField(8,gen=0x11b, useLUT=0)
     coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
 
+def set_values():
+    global gen_size
+    global coefficient_matrix_s1
+    global packet_loss
+    parser = ArgumentParser()
+    parser.add_argument('--gen_size', action="store", dest='gen_size', default=4)
+    parser.add_argument("--packet_loss", action="store", dest="packet_loss", default=0, help="Choose how many packets will be discarded")
+    args = parser.parse_args()
+    gen_size = int(args.gen_size)
+    packet_loss = int(args.packet_loss)
+    coefficient_matrix_s1 = genericmatrix.GenericMatrix((gen_size,gen_size),add=XOR,mul=AND,sub=XOR,div=DIV)
+
 def column(matrix,i):
     f = itemgetter(i)
     return map(f,matrix)
@@ -76,19 +89,17 @@ def handle_pkt(pkt):
             global packet_number
             global coeff_rows
             global packets_to_drop_list
-            print packet_number
-            print packets_to_drop_list
+            global gen_size
+            global coefficient_matrix_s1
             if packet_number in packets_to_drop_list:
                 packet_number += 1
                 return
             pkt.show2()
-            symbol1 = int(pkt.getlayer(CodedSymbol).coded_symbol)
-            coef1 = int(pkt.getlayer(CoefficientVector).coef1)
-            coef2 = int(pkt.getlayer(CoefficientVector).coef2)
-            coef3 = int(pkt.getlayer(CoefficientVector).coef3)
-            coef4 = int(pkt.getlayer(CoefficientVector).coef4)
-            coefficient_matrix_s1.SetRow(coeff_rows, [coef1, coef2, coef3, coef4])
-            payload_matrix.append([symbol1])
+            coded_symbol = (pkt.getlayer(CodedSymbolVector).coded_symbols_vector)
+            coeff_vector = str(pkt.getlayer(CoefficientVector).coefficients)
+            coeff_vector_int = map(int, re.findall('\d+', coeff_vector ))
+            coefficient_matrix_s1.SetRow(coeff_rows, coeff_vector_int)
+            payload_matrix.append(coded_symbol)
             print "=======RANDOM COEFFICIENT MATRIX======="
             print coefficient_matrix_s1
             print "=======ENCODED_SYNBOLS======="
@@ -96,7 +107,7 @@ def handle_pkt(pkt):
 
             packet_number += 1
             coeff_rows += 1
-            if coeff_rows == 4:
+            if coeff_rows == gen_size:
                 b = column(payload_matrix,0)
                 solve1 = coefficient_matrix_s1.Solve(b)
                 print "=======ORIGINAL SYMBOLS======="
@@ -112,9 +123,11 @@ def select_random_packets_to_drop(n):
     packets_to_drop_list = random.sample(range(gen_size), n)
 
 def main():
+    global packet_loss
     ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
     iface = ifaces[0]
-    select_random_packets_to_drop(0)
+    set_values()
+    select_random_packets_to_drop(packet_loss)
     sys.stdout.flush()
     sniff(iface = iface,
           prn = lambda x: handle_pkt(x))

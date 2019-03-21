@@ -6,17 +6,7 @@ struct clone_metadata_t {
 
 
 
-//The metadata to manipulate the symbols and coefficients of the packets
-struct rlnc_metadata_t {
-    bit<GF_BYTES>   s1;
-    bit<GF_BYTES>   s2;
-
-    bit<GF_BYTES>   s3;
-    bit<GF_BYTES>   s4;
-}
-
 struct metadata {
-    rlnc_metadata_t         rlnc_metadata;
     clone_metadata_t        clone_metadata;
     bit<16> coeffs;
 	bit<6> symbols;
