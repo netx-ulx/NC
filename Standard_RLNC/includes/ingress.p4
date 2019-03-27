@@ -24,6 +24,7 @@
         bit<32> coeff_slots_reserved_value = 0;
         //variable for number of symbols information
         bit<32> numb_of_symbols = (bit<32>) hdr.rlnc_in.symbols;
+        bit<32> numb_of_coeffs = ((bit<32>) hdr.rlnc_in.symbols) * ((bit<32>) hdr.rlnc_in.encoderRank);
 
         bit<8> is_reserved = 0;
 
@@ -50,7 +51,7 @@
 
         // Updates the index of the buffer containing the coefficients
         action action_update_gen_coeff_index() {
-            gen_coeff_index = gen_coeff_index + gen_size;
+            gen_coeff_index = gen_coeff_index + numb_of_coeffs;
             coeff_index_per_generation.write((bit<32>) gen_id, gen_coeff_index);
         }
 
@@ -58,8 +59,7 @@
         // CONFIGURABLE: changes depending on the number of symbols in a packet
         // number of buffered symbols = hdr.rlnc_in.symbols
         action action_buffer_symbols() {
-       buf_symbols.write(gen_symbol_index + 0, hdr.symbols[0].symbol);
-       buf_symbols.write(gen_symbol_index + 1, hdr.symbols[1].symbol);
+            buf_symbols.write(gen_symbol_index + 0, hdr.symbols[0].symbol);
 
         }
 
@@ -67,11 +67,10 @@
         // CONFIGURABLE: changes depending on the GEN_SIZE
         // number of buffered coefficients = hdr.rlnc_out.gen_size
         action action_buffer_coefficients() {
-       buf_coeffs.write(gen_coeff_index + 0, hdr.coefficients[0].coef);
-       buf_coeffs.write(gen_coeff_index + 1, hdr.coefficients[1].coef);
-       buf_coeffs.write(gen_coeff_index + 2, hdr.coefficients[2].coef);
-       buf_coeffs.write(gen_coeff_index + 3, hdr.coefficients[3].coef);
-
+            buf_coeffs.write(gen_coeff_index + 0, hdr.coefficients[0].coef);
+            buf_coeffs.write(gen_coeff_index + 1, hdr.coefficients[1].coef);
+            buf_coeffs.write(gen_coeff_index + 2, hdr.coefficients[2].coef);
+            buf_coeffs.write(gen_coeff_index + 3, hdr.coefficients[3].coef);
         }
 
         action my_drop() {

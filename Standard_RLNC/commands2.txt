@@ -1,6 +1,7 @@
 table_add table_clone action_clone 2 => 1
 table_add table_forwarding_behaviour my_drop 1 1
 //table_add table_forwarding_behaviour action_forward 1 1 => 1
+
 mc_mgrp_create 1
 mc_node_create 0 1
 mc_node_create 1 1
@@ -10,7 +11,6 @@ mc_node_associate 1 0
 mc_node_associate 1 1
 mc_node_associate 1 2
 mc_node_associate 1 3
-
 register_write GF256_invlog 0 1
 register_write GF256_invlog 1 3
 register_write GF256_invlog 2 5
@@ -520,6 +520,7 @@ register_write GF256_invlog 505 108
 register_write GF256_invlog 506 180
 register_write GF256_invlog 507 199
 register_write GF256_invlog 508 82
+register_write GF256_log 1 0
 register_write GF256_log 3 1
 register_write GF256_log 5 2
 register_write GF256_log 15 3

@@ -2,7 +2,7 @@
 import os.path
 
 def generateIngress(gen_size, number_of_symbols):
-    f = open("/home/p4/Desktop/tutorials/exercises/Standard_RLNC_V3/includes/ingress.p4", "w+")
+    f = open("includes/ingress.p4", "w+")
     f.write('''
     #include "registers.p4"
     /*************************************************************************
@@ -29,6 +29,7 @@ def generateIngress(gen_size, number_of_symbols):
         bit<32> coeff_slots_reserved_value = 0;
         //variable for number of symbols information
         bit<32> numb_of_symbols = (bit<32>) hdr.rlnc_in.symbols;
+        bit<32> numb_of_coeffs = ((bit<32>) hdr.rlnc_in.symbols) * ((bit<32>) hdr.rlnc_in.encoderRank);
 
         bit<8> is_reserved = 0;
 
@@ -55,7 +56,7 @@ def generateIngress(gen_size, number_of_symbols):
 
         // Updates the index of the buffer containing the coefficients
         action action_update_gen_coeff_index() {
-            gen_coeff_index = gen_coeff_index + gen_size;
+            gen_coeff_index = gen_coeff_index + numb_of_coeffs;
             coeff_index_per_generation.write((bit<32>) gen_id, gen_coeff_index);
         }
 
@@ -73,10 +74,9 @@ def generateIngress(gen_size, number_of_symbols):
         // CONFIGURABLE: changes depending on the GEN_SIZE
         // number of buffered coefficients = hdr.rlnc_out.gen_size
         action action_buffer_coefficients() {\n''')
-    for i in range(0, gen_size):
+    for i in range(0, gen_size*number_of_symbols):
             f.write("            buf_coeffs.write(gen_coeff_index + " + str(i) + ", hdr.coefficients["+str(i)+"].coef);\n")
-    f.write('''
-        }
+    f.write('''        }
 
         action my_drop() {
             mark_to_drop();

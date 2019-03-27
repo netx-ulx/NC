@@ -1,0 +1,14 @@
+-type
+1
+-gen_size
+4
+-number_of_symbols
+1
+-number_of_packets
+4
+-packet_loss
+0
+-mul
+1
+-lin_comb
+4
