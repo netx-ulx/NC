@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-def generateEgress(gen_size, number_of_symbols, mult):
+def generateEgress(gen_size, number_of_symbols, mult, field_size):
     f = open("includes/egress.p4", "w+")
     f.write('''
-    /*************************************************************************
-    ****************  E G R E S S   P R O C E S S I N G   *******************
-    *************************************************************************/
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
 
-    // The Egress is where the coding happens. N cloned packets enter the egress as a result
-    // of the multicast mechanism being used. All of these will be a different linear combination
-    // due to different random coefficients being generated.
-    control MyEgress(inout headers hdr,
-                     inout metadata meta,
-                     inout standard_metadata_t standard_metadata) {
+// The Egress is where the coding happens. N cloned packets enter the egress as a result
+// of the multicast mechanism being used. All of these will be a different linear combination
+// due to different random coefficients being generated.
+control MyEgress(inout headers hdr,
+                 inout metadata meta,
+                 inout standard_metadata_t standard_metadata) {
 
-    	// Variable for results of the arithmetic operations
+        // Variable for results of the arithmetic operations
         // CONFIGURABLE: changes depending on the generation size, may also depend on the number of symbols we are coding together if we are using something elese other than the STANDARD RLNC scheme
         // number of mult_results = hdr.rlnc_out.gen_size\n''')
     for i in range(0,gen_size):
@@ -47,7 +47,7 @@ def generateEgress(gen_size, number_of_symbols, mult):
 
         // The LOG and ANTILOG tables
         register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-        register<bit<GF_BYTES>>(509)              GF256_invlog;
+        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
@@ -106,8 +106,8 @@ def generateEgress(gen_size, number_of_symbols, mult):
             else:
                 f.write("bit<GF_BYTES> x"+str(i)+", bit<GF_BYTES> y"+str(i))
         f.write(''') {
-            bit<8> tmp_log_a = 0;
-            bit<8> tmp_log_b = 0;
+            bit<GF_BYTES> tmp_log_a = 0;
+            bit<GF_BYTES> tmp_log_b = 0;
             bit<32> result = 0;
             bit<32> log_a = 0;
             bit<32> log_b = 0;\n\n''')
@@ -164,13 +164,22 @@ def generateEgress(gen_size, number_of_symbols, mult):
         // in the register at the moment and when all operations are done we write the resulting values
         // to the registers.
         action action_ffmult_iteration() {\n''')
-        f.write("            bit<8> mask = 0;\n")
-        for i in range(0, gen_size):
-            f.write("            mult_result_"+str(i)+" = mult_result_"+str(i)+" ^( -(tmp_y"+str(i)+" & 1) & tmp_x"+str(i)+");\n")
-            f.write("            mask = -((tmp_x"+str(i)+" >> 7) & 1);\n")
-            f.write("            tmp_x"+str(i)+" = (tmp_x"+str(i)+" << 1) ^ (IRRED_POLY & mask);\n")
-            f.write("            tmp_y"+str(i)+" = tmp_y"+str(i)+" >> 1;\n")
-            f.write("\n")
+        f.write("            bit<GF_BYTES> mask = 0;\n")
+        if field_size == 8:
+            for i in range(0, gen_size):
+                f.write("            mult_result_"+str(i)+" = mult_result_"+str(i)+" ^( -(tmp_y"+str(i)+" & 1) & tmp_x"+str(i)+");\n")
+                f.write("            mask = -((tmp_x"+str(i)+" >> 7) & 1);\n")
+                f.write("            tmp_x"+str(i)+" = (tmp_x"+str(i)+" << 1) ^ (IRRED_POLY & mask);\n")
+                f.write("            tmp_y"+str(i)+" = tmp_y"+str(i)+" >> 1;\n")
+                f.write("\n")
+        elif field_size == 16:
+            for i in range(0, gen_size):
+                f.write("            mult_result_"+str(i)+" = mult_result_"+str(i)+" ^( -(tmp_y"+str(i)+" & 1) & tmp_x"+str(i)+");\n")
+                f.write("            mask = -((tmp_x"+str(i)+" >> 15) & 1);\n")
+                f.write("            tmp_x"+str(i)+" = (tmp_x"+str(i)+" << 1) ^ (IRRED_POLY & mask);\n")
+                f.write("            tmp_y"+str(i)+" = tmp_y"+str(i)+" >> 1;\n")
+                f.write("\n")
+
         f.write('''        }
 
         // GF Multiplication Arithmetic Operation
@@ -190,7 +199,8 @@ def generateEgress(gen_size, number_of_symbols, mult):
         f.write("\n")
         for i in range(0, gen_size):
             f.write("            mult_result_"+str(i)+" = 0;\n")
-        f.write('''
+        if field_size == 8:
+            f.write('''
             action_ffmult_iteration();
             action_ffmult_iteration();
             action_ffmult_iteration();
@@ -199,6 +209,25 @@ def generateEgress(gen_size, number_of_symbols, mult):
             action_ffmult_iteration();
             action_ffmult_iteration();
             action_ffmult_iteration();\n''')
+        elif field_size == 16:
+            f.write('''
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();
+            action_ffmult_iteration();\n''')
+
         f.write('''
             action_GF_add(''')
         for i in range(0, gen_size):
@@ -312,5 +341,5 @@ def generateEgress(gen_size, number_of_symbols, mult):
                 }
             }
         }
-    }
-    ''')
+}
+''')

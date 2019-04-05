@@ -1,17 +1,31 @@
-//Type of the packets
+#!/usr/bin/env python
+import os.path
+
+def generateConstants(field_size):
+    f = open("includes/constants.p4", "w+")
+    f.write('''//Type of the packets
 #define TYPE_ACK 0
 #define TYPE_SYSTEMATIC 1
 #define TYPE_CODED 2
 #define TYPE_CODED_OR_RECODED 3
 
-//The size for the log and antilog tables, max value of the field
-#define GF_BITS 256
+//The size for the log and antilog tables, max value of the field\n''')
+    if field_size == 8:
+        f.write('''#define GF_BITS 256
 #define GF_BYTES 8
 //Value used in the generation of the random coefficients
 #define GF_MAX_VALUE 255
 
 #define IRRED_POLY 0x11b
+''')
+    elif field_size == 16:
+        f.write('''#define GF_BITS 65536
+#define GF_BYTES 16
+//Value used in the generation of the random coefficients
+#define GF_MAX_VALUE 65535
 
+#define IRRED_POLY 69643''')
+    f.write('''
 //The maximum size of the buffer that store the packets contents
 #define MAX_BUF_SIZE 1024
 
@@ -21,4 +35,4 @@ const bit<16>  TYPE_RLNC = 0x0809;
 // The following values are usually agreed upon a sender and a receiver and exchanged through an outer rlnc header like the ones defined in headers.p4. Yet, there might be parts of this p4 code where it could be necessary to have those values already defined. Therefore, I set them here for the time being.
 #define MAX_SYMBOLS 1000
 #define SYMBOL_SIZE 8
-#define FIELD_SIZE 255
+#define FIELD_SIZE 255''')

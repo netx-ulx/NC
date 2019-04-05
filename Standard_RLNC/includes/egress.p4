@@ -1,16 +1,16 @@
 
-    /*************************************************************************
-    ****************  E G R E S S   P R O C E S S I N G   *******************
-    *************************************************************************/
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
 
-    // The Egress is where the coding happens. N cloned packets enter the egress as a result
-    // of the multicast mechanism being used. All of these will be a different linear combination
-    // due to different random coefficients being generated.
-    control MyEgress(inout headers hdr,
-                     inout metadata meta,
-                     inout standard_metadata_t standard_metadata) {
+// The Egress is where the coding happens. N cloned packets enter the egress as a result
+// of the multicast mechanism being used. All of these will be a different linear combination
+// due to different random coefficients being generated.
+control MyEgress(inout headers hdr,
+                 inout metadata meta,
+                 inout standard_metadata_t standard_metadata) {
 
-    	// Variable for results of the arithmetic operations
+        // Variable for results of the arithmetic operations
         // CONFIGURABLE: changes depending on the generation size, may also depend on the number of symbols we are coding together if we are using something elese other than the STANDARD RLNC scheme
         // number of mult_results = hdr.rlnc_out.gen_size
         bit<GF_BYTES> mult_result_0 = 0;
@@ -48,7 +48,7 @@
 
         // The LOG and ANTILOG tables
         register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-        register<bit<GF_BYTES>>(509)              GF256_invlog;
+        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
@@ -92,8 +92,8 @@
         // r = x1*y1 + x2*y2 + x3*y3 + x4*y4
         // CONFIGURABLE: parameters and multiplications increase with the generation size
         action action_GF_mult(bit<GF_BYTES> x0, bit<GF_BYTES> y0, bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2, bit<GF_BYTES> x3, bit<GF_BYTES> y3) {
-            bit<8> tmp_log_a = 0;
-            bit<8> tmp_log_b = 0;
+            bit<GF_BYTES> tmp_log_a = 0;
+            bit<GF_BYTES> tmp_log_b = 0;
             bit<32> result = 0;
             bit<32> log_a = 0;
             bit<32> log_b = 0;
@@ -243,5 +243,4 @@
                 }
             }
         }
-    }
-    
+}

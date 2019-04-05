@@ -4,8 +4,6 @@ struct clone_metadata_t {
     bit<8> starting_gen_coeff_index;
 }
 
-
-
 struct metadata {
     clone_metadata_t        clone_metadata;
     bit<16> coeffs;

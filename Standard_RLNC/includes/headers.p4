@@ -19,7 +19,7 @@ header Ethernet_t{
 header Rlnc_out_t{
 	byte_t gen_id;
 	byte_t gen_size;
-	byte_t symbol_size;
+	bit<16> symbol_size;
 	bit<16> field_size;
 }
 
@@ -37,12 +37,12 @@ header Seed_t{
 
 // each symbol may contain its own coding vector which is made of size Encoding Rank coefficients
 header Coeffs_t{
-	bit<SYMBOL_SIZE> coef;
+	bit<GF_BYTES> coef;
 }
 
 //  meant to contain the packet  payload over which {re-}coding operations are perfomed
 header Symbols_t{
-	bit<SYMBOL_SIZE> symbol;
+	bit<GF_BYTES> symbol;
 }
 
 struct headers{

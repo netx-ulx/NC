@@ -1,15 +1,15 @@
 
-    #include "registers.p4"
-    /*************************************************************************
-    **************  I N G R E S S   P R O C E S S I N G   *******************
-    *************************************************************************/
+#include "registers.p4"
+/*************************************************************************
+**************  I N G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
 
-    // In the ingress the packets contents will be simply written to registers
-    // for future coding opportunities. We make use of the multicast mechanism
-    // to "clone" as many packets as we want
-    control MyIngress(inout headers hdr,
-                      inout metadata meta,
-                      inout standard_metadata_t standard_metadata) {
+// In the ingress the packets contents will be simply written to registers
+// for future coding opportunities. We make use of the multicast mechanism
+// to "clone" as many packets as we want
+control MyIngress(inout headers hdr,
+                  inout metadata meta,
+                  inout standard_metadata_t standard_metadata) {
 
         // variables for the buffering mechanism
         bit<32> gen_symbol_index = 0;
@@ -26,7 +26,7 @@
         bit<32> numb_of_symbols = (bit<32>) hdr.rlnc_in.symbols;
         bit<32> numb_of_coeffs = ((bit<32>) hdr.rlnc_in.symbols) * ((bit<32>) hdr.rlnc_in.encoderRank);
 
-        bit<8> is_reserved = 0;
+        bit<GF_BYTES> is_reserved = 0;
 
         action action_forward(bit<9> port) {
           standard_metadata.egress_spec = port;
@@ -60,7 +60,6 @@
         // number of buffered symbols = hdr.rlnc_in.symbols
         action action_buffer_symbols() {
             buf_symbols.write(gen_symbol_index + 0, hdr.symbols[0].symbol);
-
         }
 
         // Saves coefficients to registers
@@ -86,24 +85,6 @@
             }
         }
 
-        // Table for debug purposes, does nothing
-        table table_debug {
-            key = {
-                gen_symbol_index : exact;
-                gen_coeff_index : exact;
-                symbol_slots_reserved_value : exact;
-                coeff_slots_reserved_value  : exact;
-                starting_symbol_index_of_generation : exact;
-                is_reserved : exact;
-                numb_of_symbols : exact;
-                hdr.symbols[0].symbol : exact;
-                hdr.symbols[1].symbol : exact;
-            }
-            actions = {
-                NoAction;
-            }
-        }
-
         table table_forwarding_behaviour {
             key = {
                 standard_metadata.ingress_port: exact;
@@ -116,10 +97,6 @@
         }
 
         apply {
-            // so far, the forwarding of a packet is only based on the ingress port
-    		// TODO: make this behavior customazible from the control-plane. For ex., you may decided to either forward uncoded packets
-            // or drop them waiting for the current generation's buffer to fill
-
             if(hdr.rlnc_in.isValid()) {
 
                 table_forwarding_behaviour.apply();
@@ -179,13 +156,16 @@
     				// SALVO: why do we not reuse here the previous check on "gen_symbol_index == 0"?
                     if(gen_coeff_index == 0) {
 
-                        gen_coeff_index = coeff_slots_reserved_value % MAX_BUF_SIZE;
-                        //saving the starting index for future use
-                        starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, gen_coeff_index);
-                    }
+                        starting_coeff_index_of_generation = coeff_slots_reserved_value % MAX_BUF_SIZE;
 
-                    // incrementing the number of slots reserved
-                    coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
+                        //saving the starting index for future use
+                        starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, starting_coeff_index_of_generation);
+
+                        gen_coeff_index = starting_coeff_index_of_generation;
+
+                        // incrementing the number of slots reserved
+                        coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
+                    }
 
                     // saving the symbol's coefficients to the register
                     action_buffer_coefficients();
@@ -207,10 +187,6 @@
                     // this is achieved by multicasting packets to the same port
                     table_clone.apply();
                 }
-
-                // debug table meant to print some values to the switch log file
-                table_debug.apply();
             }
         }
-    }
-    
+}
