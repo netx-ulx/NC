@@ -59,22 +59,14 @@ control MyIngress(inout headers hdr,
         // CONFIGURABLE: changes depending on the number of symbols in a packet
         // number of buffered symbols = hdr.rlnc_in.symbols
         action action_buffer_symbols() {
-            buf_symbols.write(gen_symbol_index + 0, hdr.symbols[0].symbol);
-            buf_symbols.write(gen_symbol_index + 1, hdr.symbols[1].symbol);
+            ##buf_symbols.write(gen_symbol_index + N, hdr.symbols[N].symbol);
         }
 
         // Saves coefficients to registers
         // CONFIGURABLE: changes depending on the GEN_SIZE
         // number of buffered coefficients = hdr.rlnc_out.gen_size
         action action_buffer_coefficients() {
-            buf_coeffs.write(gen_coeff_index + 0, hdr.coefficients[0].coef);
-            buf_coeffs.write(gen_coeff_index + 1, hdr.coefficients[1].coef);
-            buf_coeffs.write(gen_coeff_index + 2, hdr.coefficients[2].coef);
-            buf_coeffs.write(gen_coeff_index + 3, hdr.coefficients[3].coef);
-            buf_coeffs.write(gen_coeff_index + 4, hdr.coefficients[4].coef);
-            buf_coeffs.write(gen_coeff_index + 5, hdr.coefficients[5].coef);
-            buf_coeffs.write(gen_coeff_index + 6, hdr.coefficients[6].coef);
-            buf_coeffs.write(gen_coeff_index + 7, hdr.coefficients[7].coef);
+            $buf_coeffs.write(gen_coeff_index + N, hdr.coefficients[N].coef);
         }
 
         action my_drop() {

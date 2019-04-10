@@ -1,7 +1,5 @@
 table_add table_clone action_clone 1 => 1
 table_add table_forwarding_behaviour my_drop 1 1
-//table_add table_forwarding_behaviour action_forward 1 1 => 1
-
 mc_mgrp_create 1
 mc_node_create 0 2
 mc_node_create 1 2

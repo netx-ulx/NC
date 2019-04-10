@@ -61,7 +61,7 @@ class GenericMatrix:
 
     A quick and dirty example of how to use the GenericMatrix class
     for matricies of floats is provided below.
-    
+
 >>> import genericmatrix
 >>> v = genericmatrix.GenericMatrix((3,3))
 >>> v.SetRow(0,[0.0, -1.0, 1.0])
@@ -135,12 +135,12 @@ ValueError: matrix not invertible
 # But, with this package you can do matrix ops for finite fields.
 >>> XOR = lambda x,y: x^y
 >>> AND = lambda x,y: x&y
->>> DIV = lambda x,y: x  
+>>> DIV = lambda x,y: x
 >>> m = GenericMatrix(size=(3,4),zeroElement=0,identityElement=1,add=XOR,mul=AND,sub=XOR,div=DIV)
 >>> m.SetRow(0,[0,1,0,0])
 >>> m.SetRow(1,[0,1,0,1])
 >>> m.SetRow(2,[0,0,1,0])
->>> # You can't invert m since it isn't square, but you can still 
+>>> # You can't invert m since it isn't square, but you can still
 >>> # get the LUP decomposition or solve a system of equations.
 >>> (l,u,p) = v.LUP()
 >>> p*v-l*u
@@ -155,7 +155,7 @@ ValueError: matrix not invertible
 
     """
 
-   
+
     def __init__(self, size=(2,2), zeroElement=0.0, identityElement=1.0,
                  add=operator.__add__, sub=operator.__sub__,
                  mul=operator.__mul__, div = operator.__truediv__,
@@ -174,7 +174,7 @@ ValueError: matrix not invertible
                    zeroElement: An object representing the additive
                    identity (i.e. 'zero') for the data
                    type of interest.
-                   
+
              identityElement: An object representing the multiplicative
                               identity (i.e. 'one') for the data
                               type of interest.
@@ -250,7 +250,7 @@ ValueError: matrix not invertible
                                mul=self.mul,div=self.div,eq=self.eq,
                                str=self.str,equalsZero=self.equalsZero,
                                fillMode=fillMode)
-        
+
 
     def __repr__(self):
         m = 0
@@ -273,7 +273,7 @@ ValueError: matrix not invertible
         if (self.cols != other.rows):
             raise ValueError("dimension mismatch")
         result = self.MakeSimilarMatrix((self.rows,other.cols),'z')
-                               
+
         for i in range(self.rows):
             for j in range(other.cols):
                 result.data[i][j] = reduce(self.add, map(
@@ -288,7 +288,7 @@ ValueError: matrix not invertible
             for j in range(other.cols):
                 result.data[i][j] = self.add(self.data[i][j],other.data[i][j])
         return result
-    
+
     def __sub__(self,other):
         if (self.cols != other.cols or self.rows != other.rows):
             raise ValueError("dimension mismatch")
@@ -316,7 +316,7 @@ ValueError: matrix not invertible
 
     def SetRow(self,r,result):
         "SetRow(r,result) sets row r to result."
-        
+
         assert len(result) == self.cols, ('Wrong # columns in row: ' +
                                           'expected ' + repr(self.cols) + ', got '
                                           + repr(len(result)))
@@ -371,12 +371,12 @@ ValueError: matrix not invertible
             result.data.append(list(self.data[i][colStart:(colEnd+1)]))
 
         return result
- 
+
     def UnSubMatrix(self,rowStart,rowEnd,colStart,colEnd):
         """
         UnSubMatrix(self,rowStart,rowEnd,colStart,colEnd)
         Create and return a sub matrix containg everything except
-        rows rowStart through rowEnd (inclusive) 
+        rows rowStart through rowEnd (inclusive)
         and columns colStart through colEnd (inclusive).
         """
         result = self.MakeSimilarMatrix((self.rows-(rowEnd-rowStart),
@@ -451,12 +451,12 @@ ValueError: matrix not invertible
         for c in range(startCol,self.cols):
             if (not self.equalsZero(self.data[r][c])):
                 return c
-        return -1    
+        return -1
 
     def PartialLowerGaussElim(self,rowIndex,colIndex,resultInv):
         """
         Function: PartialLowerGaussElim(rowIndex,colIndex,resultInv)
-        
+
         This function does partial Gaussian elimination on the part of
         the matrix on and below the main diagonal starting from
         rowIndex.  In addition to modifying self, this function
@@ -468,7 +468,7 @@ ValueError: matrix not invertible
         the corresponding rowIndex.  The caller can then permute
         self or apply some other operation to eliminate the zero
         and recall PartialLowerGaussElim.
-        
+
         This function is meant to be combined with UpperInverse
         to compute inverses and LU decompositions.
         """
@@ -513,7 +513,7 @@ ValueError: matrix not invertible
         """
         if (resultInv == ''):
             resultInv = self.MakeSimilarMatrix(self.Size(),'i')
-            
+
         (rowIndex,colIndex) = (0,0)
         lastRow = min(self.rows - 1,self.cols)
         lastCol = self.cols - 1
@@ -532,7 +532,7 @@ ValueError: matrix not invertible
     def UpperInverse(self,resultInv=''):
         """
         Function: UpperInverse(resultInv)
-        
+
         Assumes that self is an upper triangular matrix like
 
           [a b c ... ]
@@ -570,7 +570,7 @@ ValueError: matrix not invertible
                 self.MulAddRow(multiple,colIndex,rowToElim)
                 resultInv.MulAddRow(multiple,colIndex,rowToElim)
         return resultInv
-    
+
     def Inverse(self):
         """
         Function:       Inverse
@@ -610,7 +610,7 @@ ValueError: matrix not invertible
                         where l, u, and p have the following properties:
 
                         l is lower triangular with ones on the diagonal
-                        u is upper triangular 
+                        u is upper triangular
                         p is a permutation matrix.
 
                         The idea behind the algorithm is to first
@@ -626,7 +626,7 @@ ValueError: matrix not invertible
                         zeros appearing on the diagonal of r.  So we
                         apply some permutations to the orginal to
                         prevent this.
-                        
+
         """
         upper = self.Copy()
         resultInv = self.MakeSimilarMatrix(self.Size(),'i')
@@ -639,7 +639,7 @@ ValueError: matrix not invertible
             leader = upper.FindRowLeader(rowIndex,colIndex)
             if (leader < 0):
                 colIndex = colIndex+1
-                continue            
+                continue
             if (leader != rowIndex):
                 upper.SwapRows(leader,rowIndex)
                 resultInv.SwapRows(leader,rowIndex)
@@ -653,16 +653,16 @@ ValueError: matrix not invertible
         # possible optimization: due perm*lower explicitly without
         # relying on the * operator.
         return (perm*lower, upper, perm)
-    
+
     def Solve(self,b):
         """
         Solve(self,b):
 
         b:   A list.
-        
+
         Returns the values of x such that Ax = b.
 
-        This is done using the LUP decomposition by 
+        This is done using the LUP decomposition by
         noting that Ax = b implies PAx = Pb implies LUx = Pb.
         First we solve for Ly = Pb and then we solve Ux = y.
         The following is an example of how to use Solve:
@@ -685,7 +685,7 @@ ValueError: matrix not invertible
 >>> # Boolean example
 >>> XOR = lambda x,y: x^y
 >>> AND = lambda x,y: x&y
->>> DIV = lambda x,y: x  
+>>> DIV = lambda x,y: x
 >>> m=GenericMatrix(size=(3,6),zeroElement=0,identityElement=1,add=XOR,mul=AND,sub=XOR,div=DIV)
 >>> m.SetRow(0,[1,0,0,1,0,1])
 >>> m.SetRow(1,[0,1,1,0,1,0])
@@ -698,7 +698,7 @@ ValueError: matrix not invertible
 
         """
         assert self.cols >= self.rows
-        
+
         (L,U,P) = self.LUP()
         Pb = P.LeftMulColumnVec(b)
         y = [0]*len(Pb)
@@ -746,7 +746,7 @@ class GenericMatrixTester:
 
 
     def MakeRandom(self,s):
-        import random 
+        import random
         r = GenericMatrix(size=s,fillMode=lambda x,y: random.random(),
                           equalsZero = lambda x: abs(x) < 1e-6)
         return r
@@ -787,7 +787,7 @@ class GenericMatrixTester:
         if (s <= 1):
             return
         extraEquations=3
-        
+
         for i in range(n):
             m = self.MakeRandom((s,s+extraEquations))
             for j in range(extraEquations):

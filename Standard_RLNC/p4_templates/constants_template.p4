@@ -4,13 +4,14 @@
 #define TYPE_CODED 2
 #define TYPE_CODED_OR_RECODED 3
 
+@
 //The size for the log and antilog tables, max value of the field
-#define GF_BITS 256
-#define GF_BYTES 8
+#define GF_BITS BITS_PLACEHOLDER
+#define GF_BYTES BYTES_PLACEHOLDER
 //Value used in the generation of the random coefficients
-#define GF_MAX_VALUE 255
-#define IRRED_POLY 283
-
+#define GF_MAX_VALUE MAX_VALUE_PLACEHOLDER
+#define IRRED_POLY IRRED_PLACEHOLDER
+@
 //The maximum size of the buffer that store the packets contents
 #define MAX_BUF_SIZE 1024
 

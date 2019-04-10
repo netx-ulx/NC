@@ -19,8 +19,8 @@ header Ethernet_t{
 header Rlnc_out_t{
 	byte_t gen_id;
 	byte_t gen_size;
-	bit<16> symbol_size;
 	bit<16> field_size;
+	bit<16> symbol_size;
 }
 
 header Rlnc_in_t{

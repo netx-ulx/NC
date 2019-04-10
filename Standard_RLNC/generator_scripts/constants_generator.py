@@ -1,38 +1,57 @@
 #!/usr/bin/env python
 import os.path
 
+FIELD_SIZE_BLOCK_MARKER = "@"
+
+def replicate_block(f, t, field_size, char):
+    aline = t.readline()
+    oldblock = []
+    newblock = []
+    while char not in aline:
+        oldblock.append(aline)
+        aline = t.readline()
+    for b in oldblock:
+        if field_size == 8:
+            if "BITS_PLACEHOLDER" in b:
+                newB = b.replace("BITS_PLACEHOLDER", str(256))
+                newblock.append(newB)
+            elif "BYTES_PLACEHOLDER" in b:
+                newB = b.replace("BYTES_PLACEHOLDER", str(8))
+                newblock.append(newB)
+            elif "MAX_VALUE_PLACEHOLDER" in b:
+                newB = b.replace("MAX_VALUE_PLACEHOLDER", str(255))
+                newblock.append(newB)
+            elif "IRRED_PLACEHOLDER" in b:
+                newB = b.replace("IRRED_PLACEHOLDER", str(0x11b))
+                newblock.append(newB)
+            else:
+                newblock.append(b)
+        elif field_size == 16:
+            if "BITS_PLACEHOLDER" in b:
+                newB = b.replace("BITS_PLACEHOLDER", str(65536))
+                newblock.append(newB)
+            elif "BYTES_PLACEHOLDER" in b:
+                newB = b.replace("BYTES_PLACEHOLDER", str(16))
+                newblock.append(newB)
+            elif "MAX_VALUE_PLACEHOLDER" in b:
+                newB = b.replace("MAX_VALUE_PLACEHOLDER", str(65535))
+                newblock.append(newB)
+            elif "IRRED_PLACEHOLDER" in b:
+                newB = b.replace("IRRED_PLACEHOLDER", str(69643))
+                newblock.append(newB)
+            else:
+                newblock.append(b)
+    newblock.append("\n")
+    f.write("".join(newblock))
+
 def generateConstants(field_size):
     f = open("includes/constants.p4", "w+")
-    f.write('''//Type of the packets
-#define TYPE_ACK 0
-#define TYPE_SYSTEMATIC 1
-#define TYPE_CODED 2
-#define TYPE_CODED_OR_RECODED 3
-
-//The size for the log and antilog tables, max value of the field\n''')
-    if field_size == 8:
-        f.write('''#define GF_BITS 256
-#define GF_BYTES 8
-//Value used in the generation of the random coefficients
-#define GF_MAX_VALUE 255
-
-#define IRRED_POLY 0x11b
-''')
-    elif field_size == 16:
-        f.write('''#define GF_BITS 65536
-#define GF_BYTES 16
-//Value used in the generation of the random coefficients
-#define GF_MAX_VALUE 65535
-
-#define IRRED_POLY 69643''')
-    f.write('''
-//The maximum size of the buffer that store the packets contents
-#define MAX_BUF_SIZE 1024
-
-const bit<16>  TYPE_RLNC = 0x0809;
-#define MAX_COEFFS 1000 // this const and the following MAX_SYMBOLS may always have the same value. So far I do not see a case where those values should be different.
-
-// The following values are usually agreed upon a sender and a receiver and exchanged through an outer rlnc header like the ones defined in headers.p4. Yet, there might be parts of this p4 code where it could be necessary to have those values already defined. Therefore, I set them here for the time being.
-#define MAX_SYMBOLS 1000
-#define SYMBOL_SIZE 8
-#define FIELD_SIZE 255''')
+    t = open("p4_templates/constants_template.p4", "r")
+    while True:
+        line = t.readline()
+        if FIELD_SIZE_BLOCK_MARKER in line:
+            replicate_block(f, t, field_size, FIELD_SIZE_BLOCK_MARKER)
+        elif not line:
+            break
+        else:
+            f.write(line)
