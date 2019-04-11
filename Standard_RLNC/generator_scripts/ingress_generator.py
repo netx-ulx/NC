@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os.path
-from code_replicator import *
+from code_replicator import replicate_line_of_code
 
 REPLICATE_NUMBER_OF_SYMBOLS_CHAR = "##"
 REPLICATE_GEN_SIZE_CHAR = "$"

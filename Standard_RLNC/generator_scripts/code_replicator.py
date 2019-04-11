@@ -143,3 +143,45 @@ def replicate_code_coeff(gen_size, number_of_symbols, f, t, char, char2):
             newblock.append("\n")
             z +=1
     f.write("".join(newblock))
+
+def replicate_constants(f, t, field_size, char):
+    """ Changes the constants based on the chosen field size """
+    aline = t.readline()
+    oldblock = []
+    newblock = []
+    while char not in aline:
+        oldblock.append(aline)
+        aline = t.readline()
+    for b in oldblock:
+        if field_size == 8:
+            if "BITS_PLACEHOLDER" in b:
+                newB = b.replace("BITS_PLACEHOLDER", str(256))
+                newblock.append(newB)
+            elif "BYTES_PLACEHOLDER" in b:
+                newB = b.replace("BYTES_PLACEHOLDER", str(8))
+                newblock.append(newB)
+            elif "MAX_VALUE_PLACEHOLDER" in b:
+                newB = b.replace("MAX_VALUE_PLACEHOLDER", str(255))
+                newblock.append(newB)
+            elif "IRRED_PLACEHOLDER" in b:
+                newB = b.replace("IRRED_PLACEHOLDER", str(0x11b))
+                newblock.append(newB)
+            else:
+                newblock.append(b)
+        elif field_size == 16:
+            if "BITS_PLACEHOLDER" in b:
+                newB = b.replace("BITS_PLACEHOLDER", str(65536))
+                newblock.append(newB)
+            elif "BYTES_PLACEHOLDER" in b:
+                newB = b.replace("BYTES_PLACEHOLDER", str(16))
+                newblock.append(newB)
+            elif "MAX_VALUE_PLACEHOLDER" in b:
+                newB = b.replace("MAX_VALUE_PLACEHOLDER", str(65535))
+                newblock.append(newB)
+            elif "IRRED_PLACEHOLDER" in b:
+                newB = b.replace("IRRED_PLACEHOLDER", str(69643))
+                newblock.append(newB)
+            else:
+                newblock.append(b)
+    newblock.append("\n")
+    f.write("".join(newblock))
