@@ -15,7 +15,7 @@ def generate_p4_code(gen_size, number_of_symbols, lin_comb, mul, field_size):
     """ Generates the P4 code, specifically the ingress and egress pipeline. Also generates the commands.txt file """
     ingress_generator.generateIngress(gen_size,number_of_symbols)
     egress_generator.generateEgress(gen_size,number_of_symbols, mul, field_size)
-    generate_commands.generateCommands(lin_comb, 2, field_size)
+    generate_commands.generateCommands(lin_comb, 2, field_size, mul)
     constants_generator.generateConstants(field_size)
 
 def generate_config_file(type, gen_size, number_of_symbols, packet_loss, number_of_packets, field_size):

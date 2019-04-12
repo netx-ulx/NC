@@ -27,13 +27,12 @@ if not acceptableFileExtensions:
     print 'Please pass at least one file extension as an argument.'
     quit()
 
-dir = "includes/"
-
+dir = os.getcwd()
 filesToCheck = []
 for root, _, files in os.walk(dir):
     for f in files:
         fullpath = os.path.join(root, f)
-        if '.git' not in fullpath:
+        if '.git' not in fullpath and 'template' not in fullpath:
             for extension in acceptableFileExtensions:
             	if fullpath.endswith(extension):
                     filesToCheck.append(fullpath)
@@ -45,10 +44,10 @@ if not filesToCheck:
 lineCount = 0
 totalBlankLineCount = 0
 totalCommentLineCount = 0
-linesBuffering = -32
-linesForwarding = 32
+linesBuffering = 0
+linesForwarding = 0
 linesPacketHeadersMetadata = 0
-linesCoding = 2
+linesCoding = 0
 
 
 print ''
@@ -73,11 +72,11 @@ for fileToCheck in filesToCheck:
                 totalCommentLineCount += 1
                 fileCommentLineCount += 1
 
-        if "ingress.p4" in fileToCheck or "registers.p4" in fileToCheck:
-            linesBuffering += fileLineCount - fileBlankLineCount - fileCommentLineCount
+        #if "ingress.p4" in fileToCheck or "registers.p4" in fileToCheck:
+            #linesBuffering += fileLineCount - fileBlankLineCount - fileCommentLineCount
 
-        if "headers.p4" in fileToCheck or "metadata.p4" in fileToCheck:
-            linesPacketHeadersMetadata += fileLineCount - fileBlankLineCount - fileCommentLineCount
+        #if "headers.p4" in fileToCheck or "metadata.p4" in fileToCheck:
+            #linesPacketHeadersMetadata += fileLineCount - fileBlankLineCount - fileCommentLineCount
 
         if "egress.p4" in fileToCheck:
             linesCoding += fileLineCount - fileBlankLineCount - fileCommentLineCount
@@ -87,7 +86,7 @@ for fileToCheck in filesToCheck:
               "\t" + str(fileCommentLineCount) + \
               "\t" + str(fileLineCount - fileBlankLineCount - fileCommentLineCount)
 
-
+"""
 print ''
 print 'Modules'
 print '--------------------'
@@ -95,7 +94,7 @@ print 'Buffering:         ' + str(linesBuffering)
 print 'Coding:            ' + str(linesCoding)
 print 'Forwarding:        ' + str(linesForwarding)
 print 'PacketHeaders:     ' + str(linesPacketHeadersMetadata)
-
+"""
 
 print ''
 print 'Totals'

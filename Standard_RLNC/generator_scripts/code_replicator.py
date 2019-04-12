@@ -1,8 +1,16 @@
+PARAMETER_SEPARATOR = ", "
+FUNCTION_END = ") {"
+CALL_FUNCTION_END = ");"
+XOR_CHAR = " ^ "
+NUMBER_PLACEHOLDER = "N"
+FIELD_PLACEHOLDER = "FIELD"
+
+
 def replicate_line_of_code(n, f, line, char):
     """ Replicates a single line of code """
     for i in range(0, n):
         tmpline = line.replace(char, "")
-        newline = tmpline.replace("N", str(i), 2)
+        newline = tmpline.replace(NUMBER_PLACEHOLDER, str(i), 2)
         f.write(newline)
 
 def replicate_parameters(n, f, line, char):
@@ -12,12 +20,12 @@ def replicate_parameters(n, f, line, char):
     string = []
     string.append(action_name)
     for i in range(0, n):
-        newString = param.replace("N", str(i), 2)
+        newString = param.replace(NUMBER_PLACEHOLDER, str(i), 2)
         string.append(newString)
         if i < n - 1:
-            string.append(", ")
+            string.append(PARAMETER_SEPARATOR)
         elif i == n - 1:
-            string.append(") {")
+            string.append(FUNCTION_END)
     f.write("".join(string))
     f.write("\n")
 
@@ -29,15 +37,15 @@ def replicate_operators(n, f, line, char):
     string = []
     string.append(constant)
     for i in range(0, n):
-        newString = param.replace("N", str(i))
+        newString = param.replace(NUMBER_PLACEHOLDER, str(i))
         string.append(newString)
         if i < n - 1:
             if counter == 1:
-                string.append(", ")
+                string.append(PARAMETER_SEPARATOR)
             else:
-                string.append(" ^ ")
+                string.append(XOR_CHAR)
         elif i == n - 1:
-            string.append(");")
+            string.append(CALL_FUNCTION_END)
     f.write("".join(string))
     f.write("\n")
 
@@ -52,15 +60,15 @@ def replicate_block(n, f, t, char, field):
         aline = t.readline()
     for i in range(0, n):
         for b in oldblock:
-            if "FIELD" in b and "N" in b:
-                newB = b.replace("FIELD", str(field-1))
-                newB2 = newB.replace("N", str(i))
+            if FIELD_PLACEHOLDER in b and NUMBER_PLACEHOLDER in b:
+                newB = b.replace(FIELD_PLACEHOLDER, str(field-1))
+                newB2 = newB.replace(NUMBER_PLACEHOLDER, str(i))
                 newblock.append(newB2)
-            elif "FIELD" in b:
-                newB = b.replace("FIELD", str(field-1))
+            elif FIELD_PLACEHOLDER in b:
+                newB = b.replace(FIELD_PLACEHOLDER, str(field-1))
                 newblock.append(newB)
-            elif "N" in b:
-                newB = b.replace("N", str(i))
+            elif NUMBER_PLACEHOLDER in b:
+                newB = b.replace(NUMBER_PLACEHOLDER, str(i))
                 newblock.append(newB)
             else:
                 newblock.append(b)
@@ -84,18 +92,18 @@ def replicate_code_symbol(gen_size, number_of_symbols, f, t, char, char2):
                 string = []
                 string.append(constant)
                 for j in range(0, gen_size):
-                    newString = param.replace("N", str(j))
+                    newString = param.replace(NUMBER_PLACEHOLDER, str(j))
                     newString2 = newString.replace("M", str(m))
                     m+=1
                     string.append(newString2)
                     if j < gen_size - 1:
-                        string.append(", ")
+                        string.append(PARAMETER_SEPARATOR)
                     elif j == gen_size - 1:
                         string.append(");")
                 string.append("\n")
                 newblock.append("".join(string))
-            elif "N" in b:
-                newB = b.replace("N", str(i))
+            elif NUMBER_PLACEHOLDER in b:
+                newB = b.replace(NUMBER_PLACEHOLDER, str(i))
                 newblock.append(newB)
             else:
                 newblock.append(b)
@@ -121,12 +129,12 @@ def replicate_code_coeff(gen_size, number_of_symbols, f, t, char, char2):
                     string = []
                     string.append(constant)
                     for j in range(0, gen_size):
-                        newString = param.replace("N", str(j))
+                        newString = param.replace(NUMBER_PLACEHOLDER, str(j))
                         newString2 = newString.replace("M", str(m))
                         m +=1
                         string.append(newString2)
                         if j < gen_size - 1:
-                            string.append(", ")
+                            string.append(PARAMETER_SEPARATOR)
                         elif j == gen_size - 1:
                             string.append(");")
                     m = gen_size*w
@@ -135,8 +143,8 @@ def replicate_code_coeff(gen_size, number_of_symbols, f, t, char, char2):
                 elif "P" in b:
                     newB = b.replace("P", str(i))
                     newblock.append(newB)
-                elif "N" in b:
-                    newB = b.replace("N", str(z))
+                elif NUMBER_PLACEHOLDER in b:
+                    newB = b.replace(NUMBER_PLACEHOLDER, str(z))
                     newblock.append(newB)
                 else:
                     newblock.append(b)

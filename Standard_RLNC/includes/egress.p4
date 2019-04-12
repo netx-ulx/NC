@@ -1,4 +1,3 @@
-
 /*************************************************************************
 ****************  E G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
@@ -11,8 +10,7 @@ control MyEgress(inout headers hdr,
                  inout standard_metadata_t standard_metadata) {
 
         // Variable for results of the arithmetic operations
-        // CONFIGURABLE: changes depending on the generation size, may also depend on the number of symbols we are coding together if we are using something elese other than the STANDARD RLNC scheme
-        // number of mult_results = hdr.rlnc_out.gen_size
+        // CONFIGURABLE: changes depending on the generation size
         bit<GF_BYTES> mult_result_0 = 0;
         bit<GF_BYTES> mult_result_1 = 0;
         bit<GF_BYTES> mult_result_2 = 0;
@@ -22,21 +20,21 @@ control MyEgress(inout headers hdr,
 
 
         // Variables to hold the values of the symbols stored in the symbols registers
-        // CONFIGURABLE: changes depending on the number of symbols
+        // CONFIGURABLE: changes depending on the generation size
         bit<GF_BYTES> s0 = 0;
         bit<GF_BYTES> s1 = 0;
         bit<GF_BYTES> s2 = 0;
         bit<GF_BYTES> s3 = 0;
 
         // Variables to hold the values of the coefficients stored in the coeff register
-        // CONFIGURABLE: changes depending on the generation size, number of coefs = hdr.rlnc_out.gen_size
+        // CONFIGURABLE: changes depending on the generation size
         bit<GF_BYTES> coef_0 = 0;
         bit<GF_BYTES> coef_1 = 0;
         bit<GF_BYTES> coef_2 = 0;
         bit<GF_BYTES> coef_3 = 0;
 
         // The random generated coefficients
-        // CONFIGURABLE: changes depending on the generation size,number of rand_nums = hdr.rlnc_out.gen_size
+        // CONFIGURABLE: changes depending on the generation size and the number of symbols
         bit<GF_BYTES> rand_num0 = 0;
         bit<GF_BYTES> rand_num1 = 0;
         bit<GF_BYTES> rand_num2 = 0;
@@ -50,10 +48,6 @@ control MyEgress(inout headers hdr,
         bit<8> numb_of_symbols = (bit<8>) hdr.rlnc_in.symbols;
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
 
-        // The LOG and ANTILOG tables
-        register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
-
         // Frees the space reserved by the current generation
         action action_free_buffer() {
             buf_coeffs.write(0, 0);
@@ -61,7 +55,7 @@ control MyEgress(inout headers hdr,
             symbol_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
         }
         // Loads gen_size symbols to metadata to use in linear combinations
-        // CONFIGURABLE: changes depending on the generation size, number of reads = hdr.rlnc_out.gen_size
+        // CONFIGURABLE: changes depending on the generation size
         action action_load_symbols(bit<8> idx) {
             buf_symbols.read(s0, (bit<32>)idx + 0);
             buf_symbols.read(s1, (bit<32>)idx + 1);
@@ -70,7 +64,7 @@ control MyEgress(inout headers hdr,
 
         }
         //Loads gen_size coefficients to variables to use in the linear combinations
-        // CONFIGURABLE: changes depending on the generation size and the number of coded symbols we have in a packet so, number of reads = hdr.rlnc_out.gen_size*hdr.rlnc_in.symbols
+        // CONFIGURABLE: changes depending on the generation size
         action action_load_coeffs(bit<8> idx) {
             buf_coeffs.read(coef_0 , (bit<32>) idx + (gen_size * 0));
             buf_coeffs.read(coef_1 , (bit<32>) idx + (gen_size * 1));
@@ -91,10 +85,14 @@ control MyEgress(inout headers hdr,
             lin_comb = (x0 ^ x1 ^ x2 ^ x3);
         }
 
+        // The LOG and ANTILOG tables
+        register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
+        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
+
         // GF Multiplication Arithmetic Operation
         // multiplication_result = antilog[log[a] + log[b]]
         // r = x1*y1 + x2*y2 + x3*y3 + x4*y4
-        // CONFIGURABLE: parameters and multiplications increase with the generation size
+        // CONFIGURABLE
         action action_GF_mult(bit<GF_BYTES> x0, bit<GF_BYTES> y0, bit<GF_BYTES> x1, bit<GF_BYTES> y1, bit<GF_BYTES> x2, bit<GF_BYTES> y2, bit<GF_BYTES> x3, bit<GF_BYTES> y3) {
             bit<GF_BYTES> tmp_log_a = 0;
             bit<GF_BYTES> tmp_log_b = 0;
@@ -155,14 +153,13 @@ control MyEgress(inout headers hdr,
             action_GF_add(mult_result_0, mult_result_1, mult_result_2, mult_result_3);
         }
 
-        // Generates a number of coefficients that is equal to the generation size
-        // CONFIGURABLE: the number of random generated coefficients increases with the generation size
+        // Generates a number of coefficients
+        // CONFIGURABLE: the number of random generated coefficients increases with the generation size and the number of symbols
         action action_generate_random_coefficients() {
             // Initializing some variables to generate the random coefficients
             // with the minimum value being 0 and the maximum value being 2^n - 1
             bit<GF_BYTES> low = 0;
             bit<GF_BYTES> high = GF_MAX_VALUE;
-            // generating a number of random coefficients equal to the generation size
             random(rand_num0, low, high);
             random(rand_num1, low, high);
             random(rand_num2, low, high);

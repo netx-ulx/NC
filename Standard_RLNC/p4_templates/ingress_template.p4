@@ -28,14 +28,14 @@ control MyIngress(inout headers hdr,
 
         bit<GF_BYTES> is_reserved = 0;
 
-        action action_forward(bit<9> port) {
-          standard_metadata.egress_spec = port;
-        }
-
         // variables for generation information
         bit<8> gen_id = hdr.rlnc_out.gen_id;
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
         bit<32> encoder_rank = (bit<32>) hdr.rlnc_in.encoderRank;
+
+        action action_forward(bit<9> port) {
+          standard_metadata.egress_spec = port;
+        }
 
         action action_clone(bit<16> group) {
             standard_metadata.mcast_grp = group;
