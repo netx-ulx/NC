@@ -105,22 +105,6 @@ control MyIngress(inout headers hdr,
             }
         }
 
-        table table_debug {
-        key = {
-            gen_id : exact;
-            gen_symbol_index : exact;
-            symbol_slots_reserved_value : exact;
-            starting_symbol_index_of_generation : exact;
-            is_reserved : exact;
-            numb_of_symbols : exact;
-            hdr.symbols[0].symbol : exact;
-            hdr.symbols[1].symbol : exact;
-            gen_size : exact;
-        }
-        actions = {
-            NoAction;
-        }
-    }
 
         apply {
             if(hdr.rlnc_in.isValid()) {
@@ -202,7 +186,6 @@ control MyIngress(inout headers hdr,
                         action_update_gen_coeff_index();
                     }
 
-                    table_debug.apply();
                     // Coding iff num of stored symbols for the current generation is  equal to generation size
                     if((gen_symbol_index-starting_symbol_index_of_generation >= gen_size)) {
 

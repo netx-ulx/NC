@@ -117,16 +117,6 @@ control MyEgress(inout headers hdr,
         	hdr.rlnc_in.type = TYPE_CODED_OR_RECODED;
         }
 
-
-        table table_debug {
-        key = {
-             meta.clone_metadata.n_packets_out : exact;
-             packets_sent : exact;
-        }
-        actions = {
-            NoAction;
-        }
-    }
         apply {
             if(hdr.rlnc_in.isValid()) {
                 if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
@@ -148,7 +138,6 @@ control MyEgress(inout headers hdr,
                     // mechanism to check if its time to free buffer space
                     packets_sent_buffer.read(packets_sent, 0);
                     packets_sent = packets_sent + 1;
-                    table_debug.apply();
                     if(packets_sent >= meta.clone_metadata.n_packets_out) {
                         action_free_buffer();
                         packets_sent_buffer.write(0,0);
