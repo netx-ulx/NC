@@ -31,15 +31,11 @@ F = 0
 XOR = 0
 AND = 0
 DIV = 0
-timestamp_first_packet = 0
-timestamp_current_last_packet = 0
-first_packet = 0
-cpu_usage = 0
-measurements = 10
 measurement_pkt_rate_list = []
 final_pkt_rate_list = []
 measurement_cpu_usage_list = []
 final_cpu_usage_list = []
+timestamp_first_packet = 0
 
 def get_if():
     ifs=get_if_list()
@@ -101,7 +97,7 @@ def decode(payload_matrix, coefficient_matrix_s1, gen_size):
     b = column(payload_matrix,0)
     solve1 = coefficient_matrix_s1.Solve(b)
     original_symbols = []
-    original_symbols.apptimestamp_current_last_packet(solve1)
+    original_symbols.append(solve1)
     original_symbols_matrix = genericmatrix.GenericMatrix((gen_size,1),add=XOR,mul=AND,sub=XOR,div=DIV)
     for i in range(0, gen_size):
         original_symbols_matrix.SetRow(i, map(int,column(original_symbols,i)))
@@ -134,7 +130,7 @@ def handle_pkt(pkt, packets_to_drop_list, gen_size, symbols):
                 coefficient_matrix_s1.SetRow(coeff_rows, tmp_coeff_vector)
                 coeff_rows += 1
             for e in coded_symbol:
-                payload_matrix.apptimestamp_current_last_packet([e])
+                payload_matrix.append([e])
             packet_number += 1
             if coeff_rows == gen_size:
                 decode(payload_matrix, coefficient_matrix_s1, gen_size)
@@ -143,18 +139,16 @@ def handle_pkt(pkt, packets_to_drop_list, gen_size, symbols):
 
 def show_results(number_of_packets, pps):
     """ Calculates the average of the packets per second and cpu usage for each experiment/measurement. Then presents the final results when all measurements have been completed """
-    global cpu_usage
-    global measurements
     global measurement_pkt_rate_list
     global measurement_cpu_usage_list
     global packets_received
     global final_pkt_rate_list
-    global timestamp_first_packet
-    global timestamp_current_last_packet
-    # Sleep to wait until it has received all the packets
+    global final_cpu_usage_list
+    # Sleep 5 seconds at least to wait until the host has received all the packets
     time.sleep(5)
-    print "Running measurement " + str(len(final_pkt_rate_list) + 1) + " of " + str(measurements)
+    # Reset the packets received so that a new experiment can start over
     packets_received = 0
+    print "Running measurement " + str(len(final_pkt_rate_list) + 1) + " of " + str(10)
     # Gets the average of the pps and the cpu usage of a single experiment
     measurement_pps = round(reduce(lambda x, y: x + y, measurement_pkt_rate_list) / len(measurement_pkt_rate_list))
     measurement_cpu = round(reduce(lambda x, y: x + y, measurement_cpu_usage_list) / len(measurement_cpu_usage_list))
@@ -165,7 +159,7 @@ def show_results(number_of_packets, pps):
     final_pkt_rate_list.append(measurement_pps)
     final_cpu_usage_list.append(measurement_cpu)
     # Calculate the average of all the experiments
-    if len(final_pkt_rate_list) == measurements:
+    if len(final_pkt_rate_list) == 10:
         print ""
         print "============== FINAL RESULTS =============="
         print "AVERAGE PPS: " + str(round(reduce(lambda x, y: x + y, final_pkt_rate_list) / len(final_pkt_rate_list)))
@@ -176,13 +170,10 @@ def measure_pkt_per_second(pkt, number_of_packets, pps):
     """ Calculates how many packets per second arrive at the host and the cpu usage, finally it appends those values to a list"""
     if P4RLNC in pkt:
             global packets_received
-            global timestamp_first_packet
-            global cpu_usage
-            global first_packet
-            global timestamp_first_packet
-            global timestamp_current_last_packet
             global measurement_cpu_usage_list
             global measurement_pkt_rate_list
+            global timestamp_first_packet
+            timestamp_current_last_packet = 0
             # Starts the timer as soons as it receives the first packet
             if packets_received == 0:
                 timestamp_first_packet = time.time()

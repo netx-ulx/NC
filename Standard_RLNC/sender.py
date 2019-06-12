@@ -156,6 +156,7 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
         print sendpfast(pkt_list, iface=iface, pps=pps, parse_results=1)
         print "Packets sent per second: " + str(pps)
         i += 1
+        # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
         time.sleep(10)
 
 
