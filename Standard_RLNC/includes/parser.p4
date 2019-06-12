@@ -17,7 +17,6 @@ parser MyParser(packet_in pkt, out headers hdr, inout metadata meta, inout stand
 		}
 	}
 
-
 	state parse_rlnc_out{
 		pkt.extract(hdr.rlnc_out);
 		transition  parse_rlnc_in;

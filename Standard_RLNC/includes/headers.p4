@@ -15,9 +15,10 @@ header Ethernet_t{
 	bit<16> etherType;
 }
 
+
 // understand better if there might be the need to increase any of these fields size
 header Rlnc_out_t{
-	byte_t gen_id;
+	bit<16> gen_id;
 	byte_t gen_size;
 	bit<16> field_size;
 	bit<16> symbol_size;

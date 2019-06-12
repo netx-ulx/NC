@@ -31,5 +31,5 @@
 
             FIELDaction_ffmult_iteration();
 
-            action_GF_add(&&mult_result_N&&);
+            action_GF_add(??mult_result_N??);
         }

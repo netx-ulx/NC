@@ -1,8 +1,3 @@
-
-/*************************************************************************
-****************  E G R E S S   P R O C E S S I N G   *******************
-*************************************************************************/
-
 // The Egress is where the coding happens. N cloned packets enter the egress as a result
 // of the multicast mechanism being used. All of these will be a different linear combination
 // due to different random coefficients being generated.
@@ -32,23 +27,28 @@ control MyEgress(inout headers hdr,
 
         bit<8> numb_of_symbols = (bit<8>) hdr.rlnc_in.symbols;
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
+        register<bit<8>>(1) packets_sent_buffer;
+        bit<8> packets_sent = 0;
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
-            buf_coeffs.write(0, 0);
-            buf_symbols.write(0, 0);
+            bit<32> tmp = meta.clone_metadata.starting_gen_symbol_index;
+            buf_symbols.write(tmp, 0);
             symbol_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            coeff_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            starting_symbol_index_of_generation_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            starting_coeff_index_of_generation_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
         }
         // Loads gen_size symbols to metadata to use in linear combinations
         // CONFIGURABLE: changes depending on the generation size
-        action action_load_symbols(bit<8> idx) {
+        action action_load_symbols(bit<32> idx) {
             !buf_symbols.read(sN, (bit<32>)idx + N);
 
         }
         //Loads gen_size coefficients to variables to use in the linear combinations
         // CONFIGURABLE: changes depending on the generation size
-        action action_load_coeffs(bit<8> idx) {
-            !buf_coeffs.read(coef_N , (bit<32>) idx + (gen_size * N));
+        action action_load_coeffs(bit<32> idx) {
+            !buf_coeffs.read(coef_N , idx + (gen_size * N));
 
         }
 
@@ -61,7 +61,7 @@ control MyEgress(inout headers hdr,
 
         // GF Addition Arithmetic Operation
         action action_GF_add(%%bit<GF_BYTES> xN%%) {
-            lin_comb = (&&xN&&);
+            lin_comb = (??xN??);
         }
 
         MULTIPLICATION_PLACEHOLDER
@@ -87,7 +87,7 @@ control MyEgress(inout headers hdr,
             action_load_symbols(meta.clone_metadata.starting_gen_symbol_index);
             // Coding and copying the symbols
             CODE_SYMBOL
-            action_GF_arithmetic(&&sN, rand_numM&&);
+            action_GF_arithmetic(??sN, rand_numM??);
             hdr.symbols[N].symbol = lin_comb;
             CODE_SYMBOL
         }
@@ -98,7 +98,7 @@ control MyEgress(inout headers hdr,
         action action_code_coefficient() {
             CODE_COEFF
             action_load_coeffs(meta.clone_metadata.starting_gen_coeff_index + P);
-            action_GF_arithmetic(&&coef_N, rand_numM&&);
+            action_GF_arithmetic(??coef_N, rand_numM??);
             hdr.coefficients[N].coef = lin_comb;
             CODE_COEFF
         }
@@ -118,9 +118,18 @@ control MyEgress(inout headers hdr,
         }
 
 
+        table table_debug {
+        key = {
+             meta.clone_metadata.n_packets_out : exact;
+             packets_sent : exact;
+        }
+        actions = {
+            NoAction;
+        }
+    }
         apply {
             if(hdr.rlnc_in.isValid()) {
-                if(meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= (bit<8>) gen_size) {
+                if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
                     // Generate the random coefficients
                     action_generate_random_coefficients();
                     // Code the symbol with the generated random coefficients
@@ -132,10 +141,19 @@ control MyEgress(inout headers hdr,
                         // Since we coded the packet we change its type to TYPE_CODED_OR_RECODED
                         action_systematic_to_coded();
                     }
-                    // Recoding a packet
+                     // Recoding a packet
                     else if(hdr.rlnc_in.type == 3) {
-                        // Update the coding vector using the generated random coefficients
                         action_code_coefficient();
+                    }
+                    // mechanism to check if its time to free buffer space
+                    packets_sent_buffer.read(packets_sent, 0);
+                    packets_sent = packets_sent + 1;
+                    table_debug.apply();
+                    if(packets_sent >= meta.clone_metadata.n_packets_out) {
+                        action_free_buffer();
+                        packets_sent_buffer.write(0,0);
+                    }else {
+                        packets_sent_buffer.write(0, packets_sent);
                     }
                 }
             }

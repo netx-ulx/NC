@@ -33,6 +33,6 @@
         // multiplication product, finally obtating the final result
         // CONFIGURABLE: parameters increase with the generation size
         action action_GF_arithmetic(%%bit<GF_BYTES> xN, bit<GF_BYTES> yN%%) {
-            action_GF_mult(&&xN, yN&&);
-            action_GF_add(&&mult_result_N&&);
+            action_GF_mult(??xN, yN??);
+            action_GF_add(??mult_result_N??);
         }

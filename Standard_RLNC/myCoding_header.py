@@ -6,8 +6,8 @@ import sys, os
 # The RLNC Header, holds the type of the packet.
 class P4RLNC(Packet):
     name = "P4RLNC"
-    fields_desc = [ByteField("Gen_ID", 5),
-                   ByteField("Gen_Size", 4),
+    fields_desc = [BitField("Gen_ID", 0, 16),
+                   ByteField("Gen_Size", 8),
                    BitField("Symbol_Size", 16, 16),
                    BitField("Field_Size", 16, 16),
                    BitField("Type", 1, 2),

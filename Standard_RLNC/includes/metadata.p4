@@ -1,7 +1,8 @@
 struct clone_metadata_t {
-    bit<8> gen_symbol_index;
-    bit<8> starting_gen_symbol_index;
-    bit<8> starting_gen_coeff_index;
+    bit<32> gen_symbol_index;
+    bit<32> starting_gen_symbol_index;
+    bit<32> starting_gen_coeff_index;
+    bit<8> n_packets_out;
 }
 
 struct metadata {
@@ -9,4 +10,5 @@ struct metadata {
     bit<16> coeffs;
 	bit<6> symbols;
 	bit<32> tmp;
+    bit rlnc_enable;
 }
