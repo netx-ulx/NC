@@ -32,7 +32,8 @@ control MyIngress(inout headers hdr,
         bit<16> gen_id = hdr.rlnc_out.gen_id;
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
         bit<32> encoder_rank = (bit<32>) hdr.rlnc_in.encoderRank;
-        counter(10, CounterType.packets_and_bytes) packet_counter;
+        counter(1, CounterType.packets_and_bytes) packet_counter_ingress_1;
+        counter(1, CounterType.packets_and_bytes) packet_counter_ingress_2;
 
         action action_forward(bit<9> port) {
           standard_metadata.egress_spec = port;
@@ -112,31 +113,15 @@ control MyIngress(inout headers hdr,
             }
         }
 
-        table table_debug {
-        key = {
-            gen_id : exact;
-            gen_symbol_index : exact;
-            symbol_slots_reserved_value : exact;
-            starting_symbol_index_of_generation : exact;
-            is_reserved : exact;
-            numb_of_symbols : exact;
-            hdr.symbols[0].symbol : exact;
-            hdr.symbols[1].symbol : exact;
-            gen_size : exact;
-        }
-        actions = {
-            NoAction;
-        }
-    }
 
         apply {
             if(hdr.rlnc_in.isValid()) {
+                packet_counter_ingress_1.count(0);
                 table_enable_rlnc.apply();
                 if(meta.rlnc_enable == 0) {
                     action_forward(2);
                 } else {
                     table_forwarding_behaviour.apply();
-                    packet_counter.count((bit<32>) standard_metadata.ingress_port);
                     if((hdr.rlnc_in.type == 1 || hdr.rlnc_in.type == 3)) {
 
                         // loading the buffer index for the current generation
@@ -209,10 +194,8 @@ control MyIngress(inout headers hdr,
                         action_update_gen_coeff_index();
                     }
 
-                    table_debug.apply();
                     // Coding iff num of stored symbols for the current generation is  equal to generation size
                     if((gen_symbol_index-starting_symbol_index_of_generation >= gen_size)) {
-
                         // values for egress processing are here copied to metadata, used to:
                         // -know when its time to code
                         // -help loading from the correct index the values of the symbols and coeffs stored in the registers
@@ -224,6 +207,7 @@ control MyIngress(inout headers hdr,
                         // this is achieved by multicasting packets to the same port
                         table_clone.apply();
                     }
+                    packet_counter_ingress_2.count(0);
                 }
             }
         }

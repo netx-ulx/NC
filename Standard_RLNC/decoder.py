@@ -146,6 +146,7 @@ def show_results(number_of_packets, pps):
     global final_cpu_usage_list
     # Sleep the time that the experiment should take plus 5 seconds to compensate for slower packet processing
     time.sleep((number_of_packets/pps) + 5)
+    print "Packets received: " + str(packets_received)
     # Reset the packets received so that a new experiment can start over
     packets_received = 0
     print "Running measurement " + str(len(final_pkt_rate_list) + 1) + " of " + str(10)

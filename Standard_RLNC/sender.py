@@ -152,7 +152,7 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
         #print g
     i = 0
     # Sends the same batch of packets multiple times
-    while(i < 10):
+    while(i < 1):
         print sendpfast(pkt_list, iface=iface, pps=pps, parse_results=1)
         print "Packets sent per second: " + str(pps)
         i += 1

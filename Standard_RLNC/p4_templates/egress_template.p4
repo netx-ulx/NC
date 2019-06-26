@@ -29,6 +29,7 @@ control MyEgress(inout headers hdr,
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
         register<bit<8>>(1) packets_sent_buffer;
         bit<8> packets_sent = 0;
+        counter(1, CounterType.packets_and_bytes) packet_counter_egress;
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
@@ -120,6 +121,7 @@ control MyEgress(inout headers hdr,
         apply {
             if(hdr.rlnc_in.isValid()) {
                 if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
+                    packet_counter_egress.count(0);
                     // Generate the random coefficients
                     action_generate_random_coefficients();
                     // Code the symbol with the generated random coefficients

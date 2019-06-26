@@ -56,6 +56,7 @@ control MyEgress(inout headers hdr,
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
         register<bit<8>>(1) packets_sent_buffer;
         bit<8> packets_sent = 0;
+        counter(1, CounterType.packets_and_bytes) packet_counter_egress;
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
@@ -73,11 +74,6 @@ control MyEgress(inout headers hdr,
             buf_symbols.read(s1, (bit<32>)idx + 1);
             buf_symbols.read(s2, (bit<32>)idx + 2);
             buf_symbols.read(s3, (bit<32>)idx + 3);
-            buf_symbols.read(s4, (bit<32>)idx + 4);
-            buf_symbols.read(s5, (bit<32>)idx + 5);
-            buf_symbols.read(s6, (bit<32>)idx + 6);
-            buf_symbols.read(s7, (bit<32>)idx + 7);
-
         }
         //Loads gen_size coefficients to variables to use in the linear combinations
         // CONFIGURABLE: changes depending on the generation size
@@ -107,7 +103,7 @@ control MyEgress(inout headers hdr,
 
         // The LOG and ANTILOG tables
         register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
-        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
+        register<bit<GF_BYTES>>(GF_BITS*2)        GF256_invlog;
 
         // GF Multiplication Arithmetic Operation
         // multiplication_result = antilog[log[a] + log[b]]
@@ -311,19 +307,10 @@ control MyEgress(inout headers hdr,
         	hdr.rlnc_in.type = TYPE_CODED_OR_RECODED;
         }
 
-
-        table table_debug {
-        key = {
-             meta.clone_metadata.n_packets_out : exact;
-             packets_sent : exact;
-        }
-        actions = {
-            NoAction;
-        }
-    }
         apply {
             if(hdr.rlnc_in.isValid()) {
                 if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
+                    packet_counter_egress.count(0);
                     // Generate the random coefficients
                     action_generate_random_coefficients();
                     // Code the symbol with the generated random coefficients
@@ -342,7 +329,6 @@ control MyEgress(inout headers hdr,
                     // mechanism to check if its time to free buffer space
                     packets_sent_buffer.read(packets_sent, 0);
                     packets_sent = packets_sent + 1;
-                    table_debug.apply();
                     if(packets_sent >= meta.clone_metadata.n_packets_out) {
                         action_free_buffer();
                         packets_sent_buffer.write(0,0);
