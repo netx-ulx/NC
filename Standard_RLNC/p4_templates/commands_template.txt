@@ -1,5 +1,6 @@
 table_add table_clone action_clone N => 1 M
 table_add table_forward_ack action_forward 0 => 1
-table_add table_forwarding_behaviour my_drop 1 1
+table_add table_forwarding_behaviour my_drop 1&&&1 1 1&&&1 => 1 
+table_add table_forwarding_behaviour action_forward 0&&&0 0 0&&&0 => 2 1
 table_add table_enable_rlnc action_enable_rlnc => C
 mc_mgrp_create 1
