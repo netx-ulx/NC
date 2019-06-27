@@ -118,8 +118,8 @@ control MyEgress(inout headers hdr,
         }
 
         apply {
-            if(hdr.rlnc_in.isValid()) {
-                if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
+            if(hdr.rlnc_in.isValid() && meta.clone_metadata.coding_flag ==1 && meta.rlnc_enable == 1) {
+
                     // Generate the random coefficients
                     action_generate_random_coefficients();
                     // Code the symbol with the generated random coefficients
@@ -144,7 +144,7 @@ control MyEgress(inout headers hdr,
                     }else {
                         packets_sent_buffer.write(0, packets_sent);
                     }
-                }
-            }
+           }
+            
         }
 }
