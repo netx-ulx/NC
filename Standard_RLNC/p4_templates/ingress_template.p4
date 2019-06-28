@@ -1,12 +1,11 @@
-
 #include "registers.p4"
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
 
-// In the ingress the packets' symbols and coefficients are simply written to registers
-// for future coding opportunities. We make use of the multicast mechanism
-// to generate coded packets in the egress pipeline.
+// In the ingress the packets' symbols and coefficients (when present) are buffered in registers
+// for future coding opportunities. Coded packets are generated in the egress 
+// through the use of multicast.
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
@@ -25,8 +24,6 @@ control MyIngress(inout headers hdr,
 
         bit<32> numb_of_symbols = (bit<32>) hdr.rlnc_in.symbols;
         bit<32> numb_of_coeffs = ((bit<32>) hdr.rlnc_in.symbols) * ((bit<32>) hdr.rlnc_in.encoderRank);
-
-        bit<GF_BYTES> is_reserved = 0;
 
         // variables for generation information
         bit<16> gen_id = hdr.rlnc_out.gen_id;
@@ -116,21 +113,13 @@ control MyIngress(inout headers hdr,
 
 				table_forwarding_behaviour.apply();
 
-				// I have moved all the following commented logic to the single table above
-                //if(meta.rlnc_enable == 0) {
-				//	// TODO: to Diogo, why is this hard-coded?
-				//	// change this to table/action to specify forwarding behaviors from input to ouput ports
-                //    action_forward(2);
-                //} else {
-                //    table_forwarding_behaviour.apply();
-
 				// Type == 2 is packets carrying seed to generate coefficients, a case we do not deal with in this program
                 if((hdr.rlnc_in.type == 1 || hdr.rlnc_in.type == 3)) {
 
                     // loading the buffer index for the current generation
                     symbol_index_per_generation.read(gen_symbol_index, (bit<32>)gen_id);
 
-                    // loading the number of slots that were already reserved by all generations so far (circular buffer to reuse space across diff generations)
+                    // loading the number of slots that were already reserved by all generations so far (buffer shared across diff generations)
                     symbol_slots_reserved_buffer.read(symbol_slots_reserved_value, 0);
 
                     // loading the starting index of the generation
@@ -140,9 +129,6 @@ control MyIngress(inout headers hdr,
                     if(gen_symbol_index == 0) {
 
                         starting_symbol_index_of_generation = symbol_slots_reserved_value % MAX_BUF_SIZE;
-
-                        // checking space availability at the computed index
-                        buf_symbols.read(is_reserved, starting_symbol_index_of_generation);
 
                         // if buffer overflows or starting_symbol_index_of_generation is already allocated then the packet will be dropped
                         if(starting_symbol_index_of_generation + gen_size > MAX_BUF_SIZE) {
@@ -163,41 +149,43 @@ control MyIngress(inout headers hdr,
                     // incrementing the gen_symbol_index
                     action_update_gen_symbol_index();
 
-                }
+                
 
-        		// processing of either coded or re-coded packets with coeff included into the header
-                if(hdr.rlnc_in.type == 3) {
+        			// processing of either coded or re-coded packets with coeff included into the header
+                	if(hdr.rlnc_in.type == 3) {
 
-                    //loading the coeff buffer index for the generation
-                    coeff_index_per_generation.read(gen_coeff_index, (bit<32>) gen_id);
+                	    //loading the coeff buffer index for the generation
+                	    coeff_index_per_generation.read(gen_coeff_index, (bit<32>) gen_id);
 
-                    //loading the number of slots that are already reserved
-                    coeff_slots_reserved_buffer.read(coeff_slots_reserved_value, 0);
+                	    //loading the number of slots that are already reserved
+                	    coeff_slots_reserved_buffer.read(coeff_slots_reserved_value, 0);
 
-                    //loading the starting index of the generation in the coeff buffer
-                    starting_coeff_index_of_generation_buffer.read(starting_coeff_index_of_generation, (bit<32>) gen_id);
+                	    //loading the starting index of the generation in the coeff buffer
+                	    starting_coeff_index_of_generation_buffer.read(starting_coeff_index_of_generation, (bit<32>) gen_id);
 
-                    //if condition to check if its the first time seing a generation
-        			// SALVO: why do we not reuse here the previous check on "gen_symbol_index == 0"?
-					// answer: since that is incremented by the action_update_gen_symbol_index() called previously
-                    if(gen_coeff_index == 0) {
+                	    //if condition to check if its the first time seing a generation
+        				// the previous check on "gen_symbol_index == 0" cannot be-reused since that is incremented by the action_update_gen_symbol_index() called previously
+						// TODO: however, we could move action_update_gen_symbol_index() and get rid of the additional variable gen_coeff_index
+                	    if(gen_coeff_index == 0) {
 
-                        starting_coeff_index_of_generation = coeff_slots_reserved_value % MAX_BUF_SIZE;
+                	        starting_coeff_index_of_generation = coeff_slots_reserved_value % MAX_BUF_SIZE;
 
-                        //saving the starting index for future use
-                        starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, starting_coeff_index_of_generation);
+                	        //saving the starting index for future use
+                	        starting_coeff_index_of_generation_buffer.write((bit<32>)gen_id, starting_coeff_index_of_generation);
 
-                        gen_coeff_index = starting_coeff_index_of_generation;
+                	        gen_coeff_index = starting_coeff_index_of_generation;
 
-                        // incrementing the number of slots reserved
-                        coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
-                    }
+                	        // incrementing the number of slots reserved
+                	        coeff_slots_reserved_buffer.write(0, coeff_slots_reserved_value + (encoder_rank*gen_size));
+                	    }
 
-                    // saving the symbol's coefficients to the register
-                    action_buffer_coefficients();
+                	    // saving the symbol's coefficients to the register
+                	    action_buffer_coefficients();
 
-                    action_update_gen_coeff_index();
-                }
+                	    action_update_gen_coeff_index();
+                	}
+
+				} // end of first IF on the rlnc.type
 
                 // Coding iff num of stored symbols for the current generation is  equal to or greater than generation size
                 if((gen_symbol_index-starting_symbol_index_of_generation >= gen_size)) {
@@ -213,7 +201,6 @@ control MyIngress(inout headers hdr,
                     // activate multicast here to generate packets holding different linear combinations in egress
                     table_clone.apply();
                 }
-                //}
                 packet_counter_ingress_2.count(0);
             }
         }
