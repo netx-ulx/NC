@@ -53,13 +53,6 @@ control MyEgress(inout headers hdr,
 
         }
 
-        // This action depends on the number of coded symbols we want to generate based
-        // on uncoded ones, we can have one coded symbol or more in one packet
-        action action_remove_symbols() {
-            hdr.rlnc_in.symbols = hdr.rlnc_in.symbols - 1;
-            hdr.symbols[1].setInvalid();
-        }
-
         // GF Addition Arithmetic Operation
         action action_GF_add(%%bit<GF_BYTES> xN%%) {
             lin_comb = (??xN??);
@@ -119,8 +112,7 @@ control MyEgress(inout headers hdr,
         }
 
         apply {
-            if(hdr.rlnc_in.isValid()) {
-                if((meta.clone_metadata.gen_symbol_index - meta.clone_metadata.starting_gen_symbol_index >= gen_size) && meta.rlnc_enable == 1) {
+            if(hdr.rlnc_in.isValid() && meta.clone_metadata.coding_flag ==1 && meta.rlnc_enable == 1) {
                     packet_counter_egress.count(0);
                     // Generate the random coefficients
                     action_generate_random_coefficients();
@@ -146,7 +138,7 @@ control MyEgress(inout headers hdr,
                     }else {
                         packets_sent_buffer.write(0, packets_sent);
                     }
-                }
-            }
+           }
+
         }
 }

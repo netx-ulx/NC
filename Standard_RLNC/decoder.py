@@ -49,10 +49,8 @@ def get_if():
         exit(1)
     return iface
 
-def column(matrix,i):
-    """ Return the specified column of a matrix """
-    f = itemgetter(i)
-    return map(f,matrix)
+def column(matrix, i):
+    return [row[i] for row in matrix]
 
 def build_FF_matrix(gen_size):
     """ Build the matrix where the coefficients are going to be put """
@@ -95,12 +93,12 @@ def decode(payload_matrix, coefficient_matrix_s1, gen_size):
     """ Decodes the encoded symbols using the coefficient matrix """
     set_finite_field
     b = column(payload_matrix,0)
+    print b
     solve1 = coefficient_matrix_s1.Solve(b)
-    original_symbols = []
-    original_symbols.append(solve1)
     original_symbols_matrix = genericmatrix.GenericMatrix((gen_size,1),add=XOR,mul=AND,sub=XOR,div=DIV)
     for i in range(0, gen_size):
-        original_symbols_matrix.SetRow(i, map(int,column(original_symbols,i)))
+        original_symbols_matrix.SetRow(i, [solve1[i]])
+    print original_symbols_matrix
     write_symbols_to_file(original_symbols_matrix)
 
 def reset(gen_size):
@@ -111,17 +109,13 @@ def reset(gen_size):
     coefficient_matrix_s1 = build_FF_matrix(gen_size)
     payload_matrix = []
 
-def handle_pkt(pkt, packets_to_drop_list, gen_size, symbols):
+def handle_pkt(pkt, gen_size, symbols):
     """ Called when a packet arrives, it builds the coefficient and encoded symbol matrices as they arrive When the coefficient matrix reaches full rank then its time to decode """
     if P4RLNC in pkt:
-            global packet_number
             global coeff_rows
             global coefficient_matrix_s1
             global payload_matrix
             print "got a packet"
-            if packet_number in packets_to_drop_list:
-                packet_number += 1
-                return
             coded_symbol = (pkt.getlayer(P4RLNC).symbols_vector)
             coeff_vector = (pkt.getlayer(P4RLNC).coefficient_vector)
             for i in range(0, symbols):
@@ -131,7 +125,6 @@ def handle_pkt(pkt, packets_to_drop_list, gen_size, symbols):
                 coeff_rows += 1
             for e in coded_symbol:
                 payload_matrix.append([e])
-            packet_number += 1
             if coeff_rows == gen_size:
                 decode(payload_matrix, coefficient_matrix_s1, gen_size)
                 gen_id = (pkt.getlayer(P4RLNC).Gen_ID)

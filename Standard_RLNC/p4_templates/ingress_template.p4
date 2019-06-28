@@ -202,6 +202,9 @@ control MyIngress(inout headers hdr,
                 // Coding iff num of stored symbols for the current generation is  equal to or greater than generation size
                 if((gen_symbol_index-starting_symbol_index_of_generation >= gen_size)) {
 
+					// enable coding in egress
+                    meta.clone_metadata.coding_flag =  1;
+
                     // values for egress processing are here copied to metadata:
                     meta.clone_metadata.gen_symbol_index =  gen_symbol_index;
                     meta.clone_metadata.starting_gen_symbol_index = starting_symbol_index_of_generation;
