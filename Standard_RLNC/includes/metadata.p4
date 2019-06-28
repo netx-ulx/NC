@@ -1,7 +1,7 @@
 struct clone_metadata_t {
     bit<32> gen_symbol_index;
-    bit<32> starting_gen_symbol_index;
-    bit<32> starting_gen_coeff_index;
+    bit<32> symbols_gen_head;
+    bit<32> coeff_gen_head;
     bit<8> n_packets_out;
     bit<8> coding_flag;
 }

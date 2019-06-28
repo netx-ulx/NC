@@ -33,12 +33,12 @@ control MyEgress(inout headers hdr,
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
-            bit<32> tmp = meta.clone_metadata.starting_gen_symbol_index;
+            bit<32> tmp = meta.clone_metadata.symbols_gen_head;
             buf_symbols.write(tmp, 0);
-            symbol_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
-            coeff_index_per_generation.write((bit<32>)hdr.rlnc_out.gen_id, 0);
-            starting_symbol_index_of_generation_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
-            starting_coeff_index_of_generation_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            symbol_gen_offset_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            coeff_gen_offset_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            symbols_gen_head_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
+            coeff_gen_head_buffer.write((bit<32>)hdr.rlnc_out.gen_id, 0);
         }
         // Loads gen_size symbols to metadata to use in linear combinations
         // CONFIGURABLE: changes depending on the generation size
@@ -78,7 +78,7 @@ control MyEgress(inout headers hdr,
             // Loading symbols in metadata
             // The number of symbols that need to be loaded is
             // equal to GEN_SIZE. Meaning loading all the symbols from the following positions:
-            action_load_symbols(meta.clone_metadata.starting_gen_symbol_index);
+            action_load_symbols(meta.clone_metadata.symbols_gen_head);
             // Coding and copying the symbols
             CODE_SYMBOL
             action_GF_arithmetic(??sN, rand_numM??);
@@ -91,7 +91,7 @@ control MyEgress(inout headers hdr,
         // CONFIGURABLE: depends on the generation size
         action action_code_coefficient() {
             CODE_COEFF
-            action_load_coeffs(meta.clone_metadata.starting_gen_coeff_index + P);
+            action_load_coeffs(meta.clone_metadata.coeff_gen_head + P);
             action_GF_arithmetic(??coef_N, rand_numM??);
             hdr.coefficients[N].coef = lin_comb;
             CODE_COEFF
