@@ -16,13 +16,18 @@
             @
             GF256_log.read(tmp_log_a, (bit<32>) xN);
             GF256_log.read(tmp_log_b, (bit<32>) yN);
+
+			if(xN == 0 || yN == 0) {
+                mult_result_N = 0;
+				return;
+            }
+
             log_a = (bit<32>) tmp_log_a;
             log_b = (bit<32>) tmp_log_b;
             result = (log_a + log_b);
+
             GF256_invlog.read(mult_result_N, result);
-            if(xN == 0 || yN == 0) {
-                mult_result_N = 0;
-            }
+            
             @
 
         }
