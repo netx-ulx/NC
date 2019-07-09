@@ -4,7 +4,7 @@
 *************************************************************************/
 
 // In the ingress the packets' symbols and coefficients (when present) are buffered in registers
-// for future coding opportunities. Coded packets are generated in the egress 
+// for future coding opportunities. Coded packets are generated in the egress
 // through the use of multicast.
 control MyIngress(inout headers hdr,
                   inout metadata meta,
@@ -70,7 +70,7 @@ control MyIngress(inout headers hdr,
         }
 
         action my_drop() {
-            mark_to_drop();
+            mark_to_drop(standard_metadata);
         }
 
         action action_enable_rlnc(bit rlnc_enable) {
@@ -149,7 +149,7 @@ control MyIngress(inout headers hdr,
                     // incrementing the symbols_gen_offset
                     action_update_symbols_gen_offset();
 
-                
+
 
         			// processing of either coded or re-coded packets with coeff included into the header
                 	if(hdr.rlnc_in.type == 3) {

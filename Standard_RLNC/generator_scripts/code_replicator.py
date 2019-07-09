@@ -75,7 +75,69 @@ def replicate_block(n, f, t, char, field):
         newblock.append("\n")
     f.write("".join(newblock))
 
-def replicate_code_symbol(gen_size, number_of_symbols, f, t, char, char2):
+def replicate_code_symbol(gen_size, number_of_symbols, f, t, char, char2, field_size):
+    """ Replicates the symbol coding block N times. Since its a bit more specific, the replicate_block function could not be used """
+    aline = t.readline()
+    oldblock = []
+    newblock = []
+    while char not in aline:
+        oldblock.append(aline)
+        aline = t.readline()
+    coeff_counter = 0
+    for s in range(0, number_of_symbols):
+        for i in range(0, gen_size):
+            for b in oldblock:
+                if NUMBER_PLACEHOLDER in b:
+                    newB = b.replace(NUMBER_PLACEHOLDER, str(i))
+                    newB2 = newB.replace("M", str(coeff_counter))
+                    newblock.append(newB2)
+                elif "FIELD" in b:
+                    newB = b.replace("FIELD", str((2**field_size)-1))
+                    newblock.append(newB)
+                else:
+                    newblock.append(b)
+            newblock.append("\n")
+            coeff_counter += 1
+        f.write("".join(newblock))
+        newblock = []
+        f.write("                    hdr.symbols["+str(s)+"].symbol = lin_comb;\n")
+        f.write("                    lin_comb = 0;\n")
+
+def replicate_code_coeff(gen_size, number_of_symbols, f, t, char, char2, field_size):
+    """ Replicates the coefficient coding block N times. Since its a bit more specific, the replicate_block function could not be used """
+    aline = t.readline()
+    oldblock = []
+    newblock = []
+    while char not in aline:
+        oldblock.append(aline)
+        aline = t.readline()
+    coeff_counter = 0
+    rand_counter = 0;
+    coeff_header = 0;
+    for p in range(0, number_of_symbols):
+        for s in range(0, gen_size):
+            for i in range(0, gen_size):
+                for b in oldblock:
+                    if NUMBER_PLACEHOLDER in b:
+                        newB = b.replace("M", str(coeff_counter+(i*gen_size)))
+                        newB2 = newB.replace(NUMBER_PLACEHOLDER, str(i+(rand_counter*gen_size)))
+                        newblock.append(newB2)
+                    elif "FIELD" in b:
+                        newB = b.replace("FIELD", str((2**field_size)-1))
+                        newblock.append(newB)
+                    else:
+                        newblock.append(b)
+            newblock.append("\n")
+            f.write("".join(newblock))
+            newblock = []
+            f.write("                        hdr.coefficients["+str(coeff_header)+"].coef = lin_comb;\n")
+            f.write("                        lin_comb = 0;\n")
+            coeff_header+=1
+            coeff_counter +=1
+        rand_counter+=1
+        coeff_counter = 0
+
+def replicate_code_symbol_alg(gen_size, number_of_symbols, f, t, char, char2):
     """ Replicates the symbol coding block N times. Since its a bit more specific, the replicate_block function could not be used """
     aline = t.readline()
     oldblock = []
@@ -110,7 +172,7 @@ def replicate_code_symbol(gen_size, number_of_symbols, f, t, char, char2):
         newblock.append("\n")
     f.write("".join(newblock))
 
-def replicate_code_coeff(gen_size, number_of_symbols, f, t, char, char2):
+def replicate_code_coeff_alg(gen_size, number_of_symbols, f, t, char, char2):
     """ Replicates the coefficient coding block N times. Since its a bit more specific, the replicate_block function could not be used """
     aline = t.readline()
     oldblock = []
@@ -172,7 +234,7 @@ def replicate_constants(f, t, field_size, char):
                 newB = b.replace("MAX_VALUE_PLACEHOLDER", str(255))
                 newblock.append(newB)
             elif "IRRED_PLACEHOLDER" in b:
-                newB = b.replace("IRRED_PLACEHOLDER", str(0x11b))
+                newB = b.replace("IRRED_PLACEHOLDER", str(27))
                 newblock.append(newB)
             else:
                 newblock.append(b)

@@ -31,11 +31,12 @@ F = 0
 XOR = 0
 AND = 0
 DIV = 0
-measurement_pkt_rate_list = []
 final_pkt_rate_list = []
-measurement_cpu_usage_list = []
 final_cpu_usage_list = []
-timestamp_first_packet = 0
+final_packets_received_list = []
+measurements = 1
+total_measurements = 10
+start = 0
 
 def get_if():
     ifs=get_if_list()
@@ -59,6 +60,11 @@ def build_FF_matrix(gen_size):
 def select_random_packets_to_drop(gen_size, n):
     """ Selects random packets to drop """
     return random.sample(range(gen_size), n)
+
+def std_dev(xs):
+    mean = sum(xs) / len(xs)   # mean
+    var  = sum(pow(x-mean,2) for x in xs) / len(xs)  # variance
+    std  = math.sqrt(var)  # standard deviation
 
 def set_finite_field(field_size):
     """ Sets the finite field deptimestamp_current_last_packeting of the field size """
@@ -118,6 +124,7 @@ def handle_pkt(pkt, gen_size, symbols):
             print "got a packet"
             coded_symbol = (pkt.getlayer(P4RLNC).symbols_vector)
             coeff_vector = (pkt.getlayer(P4RLNC).coefficient_vector)
+            pkt.show2()
             for i in range(0, symbols):
                 tmp_coeff_vector = coeff_vector[:gen_size]
                 del coeff_vector[:gen_size]
@@ -130,57 +137,80 @@ def handle_pkt(pkt, gen_size, symbols):
                 gen_id = (pkt.getlayer(P4RLNC).Gen_ID)
                 reset(gen_size)
 
-def show_results(number_of_packets, pps):
-    """ Calculates the average of the packets per second and cpu usage for each experiment/measurement. Then presents the final results when all measurements have been completed """
-    global measurement_pkt_rate_list
-    global measurement_cpu_usage_list
+def measure_packet_per_second(number_of_packets, pps):
+    """ Calculates the average of the packets per second and cpu usage. Then presents the final results when all measurements have been completed """
     global packets_received
     global final_pkt_rate_list
     global final_cpu_usage_list
+    global measurements
+    global start
+    measurement_pkt_rate_list = []
+    measurement_cpu_usage_list = []
+    i = 0
+    print "INITIATING TEST " + str(measurements) + " of 10"
+    while(i < total_measurements):
+        time.sleep(1)
+        end = time.time()
+        packets_received_per_second = packets_received/(end-start)
+        cpu_usage = psutil.cpu_percent()
+        print "PPS: " + str(packets_received_per_second)
+        print "CPU: " + str(cpu_usage)
+        print ""
+        measurement_pkt_rate_list.append(packets_received/(end-start))
+        measurement_cpu_usage_list.append(cpu_usage)
+        i += 1
+    avg_pps = round(reduce(lambda x, y: x + y, measurement_pkt_rate_list) / len(measurement_pkt_rate_list))
+    avg_cpu = round(reduce(lambda x, y: x + y, measurement_cpu_usage_list) / len(measurement_cpu_usage_list))
+    print ""
+    print "============== TEST " + str(measurements) + " OF 10 RESULTS =============="
+    print "AVERAGE PPS: " + str(avg_pps)
+    print "AVERAGE CPU USAGE: " + str(avg_cpu)
     # Sleep the time that the experiment should take plus 5 seconds to compensate for slower packet processing
     time.sleep((number_of_packets/pps) + 5)
-    print "Packets received: " + str(packets_received)
-    # Reset the packets received so that a new experiment can start over
-    packets_received = 0
-    print "Running measurement " + str(len(final_pkt_rate_list) + 1) + " of " + str(10)
-    # Gets the average of the pps and the cpu usage of a single experiment
-    measurement_pps = round(reduce(lambda x, y: x + y, measurement_pkt_rate_list) / len(measurement_pkt_rate_list))
-    measurement_cpu = round(reduce(lambda x, y: x + y, measurement_cpu_usage_list) / len(measurement_cpu_usage_list))
-    print "PPS: " + str(measurement_pps)
-    print "CPU: " + str(measurement_cpu)
+    print "PACKETS RECEIVED: " + str(packets_received)
     print ""
-    # Appends the averages of a single experiment to lists
-    final_pkt_rate_list.append(measurement_pps)
-    final_cpu_usage_list.append(measurement_cpu)
-    # Calculate the average of all the experiments
-    if len(final_pkt_rate_list) == 10:
-        print ""
-        print "============== FINAL RESULTS =============="
-        print "AVERAGE PPS: " + str(round(reduce(lambda x, y: x + y, final_pkt_rate_list) / len(final_pkt_rate_list)))
-        print "AVERAGE CPU USAGE: " + str(round(reduce(lambda x, y: x + y, final_cpu_usage_list) / len(final_cpu_usage_list)))
-    return
+    measurements += 1
+    final_packets_received_list.append(packets_received)
+    final_pkt_rate_list.append(avg_pps)
+    final_cpu_usage_list.append(avg_cpu)
+    packets_received = 0
+    sys.exit(1)
 
-def measure_pkt_per_second(pkt, number_of_packets, pps):
-    """ Calculates how many packets per second arrive at the host and the cpu usage, finally it appends those values to a list"""
+def avg_of_all_tests():
+    global final_pkt_rate_list
+    global final_cpu_usage_list
+    global measurements
+    global final_packets_received_list
+    while(measurements <= total_measurements):
+        pass
+    avg_pps_all_tests = round(reduce(lambda x, y: x + y, final_pkt_rate_list) / len(final_pkt_rate_list))
+    avg_cpu_all_tests = round(reduce(lambda x, y: x + y, final_cpu_usage_list) / len(final_cpu_usage_list))
+    avg_packets_received = round(reduce(lambda x, y: x + y, final_packets_received_list) / len(final_packets_received_list))
+    print ""
+    print "============== FINAL RESULTS OF ALL TESTS =============="
+    print "AVERAGE PPS: " + str(avg_pps_all_tests)
+    print "AVERAGE CPU USAGE: " + str(avg_cpu_all_tests)
+    print "AVERAGE PACKETS RECEIVED: " + str(avg_packets_received)
+    print "STANDARD DEVIATION: " + str(std_dev(final_pkt_rate_list))
+    print ""
+
+def handle_pkt_2(pkt, number_of_packets, pps):
+    """ Handles packets and launches threads to measure the rate of packets received and how many it has received"""
+    global packets_received
+    global start
     if P4RLNC in pkt:
-            global packets_received
-            global measurement_cpu_usage_list
-            global measurement_pkt_rate_list
-            global timestamp_first_packet
-            timestamp_current_last_packet = 0
             # Starts the timer as soons as it receives the first packet
             if packets_received == 0:
-                timestamp_first_packet = time.time()
+                start = time.time()
+                pkt.show2()
                 # Launches a thread that will show the results when all of packets arrive
-                t = threading.Thread(target=show_results, args=(number_of_packets, pps,))
+                t = threading.Thread(target=measure_packet_per_second, args=(number_of_packets, pps,))
+                #t1 = threading.Thread(target=measure_packets_received, args=(number_of_packets, pps,))
                 t.daemon = True
+                #t1.daemon = True
                 t.start()
+                #t1.start()
             packets_received += 1
-            # Notes down the time that each packet arrives
-            timestamp_current_last_packet = time.time()
-            measurement_cpu_usage_list.append(psutil.cpu_percent())
-            # Calculates the rate of packets per second everytime a packet arrives and appends that value to a list to later calculate the average
-            measurement_pkt_rate_list.append(packets_received/float((timestamp_current_last_packet-timestamp_first_packet)))
 
 def main():
     global coefficient_matrix_s1
@@ -192,8 +222,11 @@ def main():
     set_finite_field(field_size)
     coefficient_matrix_s1 = build_FF_matrix(gen_size)
     sys.stdout.flush()
+    t2 = threading.Thread(target=avg_of_all_tests)
+    t2.daemon = True
+    t2.start()
     sniff(iface = iface,
-          prn = lambda x: measure_pkt_per_second(x, number_of_packets, pps))
+          prn = lambda x: handle_pkt_2(x, number_of_packets, pps))
 
 
 if __name__ == '__main__':

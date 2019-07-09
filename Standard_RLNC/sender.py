@@ -124,6 +124,7 @@ def send_coded_packets(number_of_packets, number_of_symbols, gen_size, field_siz
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
         pkt = pkt / P4RLNC(Gen_Size=gen_size, Type=3, Symbol_Size=field_size, Field_Size=field_size, Symbols=number_of_symbols, Encoder_Rank=gen_size,coefficient_vector=tmp_coeffs_vector,symbols_vector=tmp_symbols_vector)
         sendp(pkt, iface=iface, verbose=False)
+        pkt.show2()
     print "ORIGINAL SYMBOLS"
     print original_symbols
 
@@ -157,7 +158,7 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
         print "Packets sent per second: " + str(pps)
         i += 1
         # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
-        time.sleep(10)
+        time.sleep((number_of_packets/pps) + 8)
 
 
 def main():

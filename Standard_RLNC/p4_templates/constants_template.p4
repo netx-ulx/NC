@@ -9,6 +9,7 @@
 #define GF_BYTES BYTES_PLACEHOLDER
 //Value used in the generation of the random coefficients
 #define GF_MAX_VALUE MAX_VALUE_PLACEHOLDER
+//The original value should be 283 for 2^8 and 69643 for 2^16. However, the value in here is the value then used by the algorithm since it computes with 8-bit fields or 16-bit fields
 #define IRRED_POLY IRRED_PLACEHOLDER
 @
 //The maximum size of the buffer that store the packets contents
@@ -21,4 +22,3 @@ const bit<16>  TYPE_ACK = 0x0899;
 // The following values are usually agreed upon a sender and a receiver and exchanged through an outer rlnc header like the ones defined in headers.p4. Yet, there might be parts of this p4 code where it could be necessary to have those values already defined. Therefore, I set them here for the time being.
 #define MAX_SYMBOLS 100
 #define SYMBOL_SIZE 8
-#define FIELD_SIZE 255

@@ -26,6 +26,10 @@ control MyEgress(inout headers hdr,
         register<bit<8>>(1) packets_sent_buffer;
         bit<8> packets_sent = 0;
         counter(1, CounterType.packets_and_bytes) packet_counter_egress;
+        register<bit<GF_BYTES>>(GF_BITS)          GF256_log;
+        register<bit<GF_BYTES>>(GF_BITS*2)              GF256_invlog;
+        bit<32> sum_log = 0;
+
 
         // Frees the space reserved by the current generation
         action action_free_buffer() {
@@ -50,9 +54,6 @@ control MyEgress(inout headers hdr,
 
         }
 
-
-        MULTIPLICATION_PLACEHOLDER
-
         // Generates a number of coefficients
         // CONFIGURABLE: the number of random generated coefficients increases with the generation size and the number of symbols
         action action_generate_random_coefficients() {
@@ -76,6 +77,28 @@ control MyEgress(inout headers hdr,
         // the packet is either coded or recoded
         action action_systematic_to_coded() {
         	hdr.rlnc_in.type = TYPE_CODED_OR_RECODED;
+        }
+
+        // Get the values from the log table and sum them together
+        action action_get_sum_log(bit<GF_BYTES> x, bit<GF_BYTES> y) {
+            bit<GF_BYTES> tmp_log_a = 0;
+            bit<GF_BYTES> tmp_log_b = 0;
+            bit<32> log_a = 0;
+            bit<32> log_b = 0;
+
+            GF256_log.read(tmp_log_a, (bit<32>) x);
+            GF256_log.read(tmp_log_b, (bit<32>) y);
+
+            log_a = (bit<32>) tmp_log_a;
+            log_b = (bit<32>) tmp_log_b;
+            sum_log = (log_a + log_b);
+        }
+
+        // Get the final multiplication result from the antilog table and add to linear combination
+        action action_get_antilog_value_and_add(bit<32> log_sum) {
+            bit<GF_BYTES> mult_result = 0;
+            GF256_invlog.read(mult_result, log_sum);
+            lin_comb = lin_comb ^ mult_result;
         }
 
         apply {

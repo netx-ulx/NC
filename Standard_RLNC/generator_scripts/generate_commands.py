@@ -58,9 +58,6 @@ def set_lookup_tables(mul, field_size, f):
 				for i in range(0, 255):
 					f.write("register_write GF256_invlog " + str(i) + " " + str(Exp[i]) +"\n")
 
-				for i in range(255, 509):
-					f.write("register_write GF256_invlog " + str(i) + " " + str(Exp[i%255]) + "\n")
-
 				for i in range(0, 255):
 					f.write("register_write GF256_log " + str(Exp[i]) + " " + str(i) + "\n")
 
@@ -75,9 +72,6 @@ def set_lookup_tables(mul, field_size, f):
 
 				for i in range(0, 65535):
 					f.write("register_write GF256_invlog " + str(i) + " " + str(Exp[i]) +"\n")
-
-				for i in range(65535, 131069):
-					f.write("register_write GF256_invlog " + str(i) + " " + str(Exp[i%65535]) + "\n")
 
 				for i in range(0, 65535):
 					f.write("register_write GF256_log " + str(Exp[i]) + " " + str(i) + "\n")
