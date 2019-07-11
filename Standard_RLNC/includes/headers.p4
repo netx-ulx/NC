@@ -26,7 +26,7 @@ header Rlnc_out_t{
 
 header Rlnc_in_t{
 	bit<2> type;
-	bit<6> symbols;
+	bit<4> symbols;
 	byte_t encoderRank;
 }
 
