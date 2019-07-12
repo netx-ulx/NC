@@ -93,9 +93,6 @@ def send_systematic_packets(number_of_packets, number_of_symbols, gen_size, fiel
     """ Sends systematic symbols to the receiver, packets with systematic symbols have a type equal to one"""
     original_symbols = generate_symbols(gen_size)
     symbols_vector = original_symbols.GetColumn(0)
-    f = open("symbols_sender.txt", "a")
-    f.write(str(original_symbols))
-    f.write("\n")
     for i in range(0,number_of_packets):
         tmp_symbols_vector = symbols_vector[:number_of_symbols]
         del symbols_vector[:number_of_symbols]
@@ -153,8 +150,8 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
         #print g
     i = 0
     # Sends the same batch of packets multiple times
-    while(i < 1):
-        print sendpfast(pkt_list, iface=iface, pps=pps, parse_results=1)
+    while(i < 10):
+        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10, file_cache=True)
         print "Packets sent per second: " + str(pps)
         i += 1
         # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
@@ -164,7 +161,7 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
 def main():
     global MAX_SYMBOL_VALUE
     global start
-    iface = get_if()[0]
+    iface = "veth0"
     type, gen_size, number_of_symbols, number_of_packets, field_size, pps = parser.get_sender_args()
     set_finite_field(field_size)
     if field_size == 8:
