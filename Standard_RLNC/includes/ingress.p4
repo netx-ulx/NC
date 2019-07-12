@@ -77,7 +77,7 @@ control MyIngress(inout headers hdr,
         }
 
         action my_drop() {
-            mark_to_drop(standard_metadata);
+            mark_to_drop();
         }
 
         action action_enable_rlnc(bit rlnc_enable) {
