@@ -18,9 +18,11 @@ def generate_p4_code(gen_size, number_of_symbols, lin_comb, mul, field_size, c_f
     generate_commands.generateCommands(lin_comb, 2, field_size, mul, c_flag)
     constants_generator.generateConstants(field_size)
 
-def generate_config_file(type, gen_size, number_of_symbols, number_of_packets, field_size, pps):
+def generate_config_file(mul, type, gen_size, number_of_symbols, number_of_packets, field_size, pps):
     """ Generates a config file to be used by the sender and the decoder applications """
     f = open("config.txt", "w+")
+    f.write("-m\n")
+    f.write(str(mul)+"\n")
     f.write("-t\n")
     f.write(str(type)+"\n")
     f.write("-g\n")
@@ -37,7 +39,7 @@ def generate_config_file(type, gen_size, number_of_symbols, number_of_packets, f
 def main():
     type, gen_size, number_of_symbols, number_of_packets, lin_comb, mul, field_size, c_flag, pps = parser.parse_args()
     generate_p4_code(gen_size, number_of_symbols, lin_comb, mul, field_size, c_flag)
-    generate_config_file(type, gen_size, number_of_symbols, number_of_packets, field_size, pps)
+    generate_config_file(mul, type, gen_size, number_of_symbols, number_of_packets, field_size, pps)
 
 
 main()

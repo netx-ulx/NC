@@ -1,6 +1,6 @@
 //Type of the packets
 #define TYPE_SYSTEMATIC 1
-#define TYPE_CODED 2
+#define TYPE_CODED_WSEED 2
 #define TYPE_CODED_OR_RECODED 3
 
 //The size for the log and antilog tables, max value of the field
@@ -16,8 +16,8 @@
 
 const bit<16>  TYPE_RLNC = 0x0809;
 const bit<16>  TYPE_ACK = 0x0899;
-#define MAX_COEFFS 100 // this const and the following MAX_SYMBOLS may always have the same value. So far I do not see a case where those values should be different.
+#define MAX_COEFFS 100 // this const and the following MAX_SYMBOLS do not hold the same value, since a coding vector of several coefficients is usually assigned to a single coded symbol.
 
 // The following values are usually agreed upon a sender and a receiver and exchanged through an outer rlnc header like the ones defined in headers.p4. Yet, there might be parts of this p4 code where it could be necessary to have those values already defined. Therefore, I set them here for the time being.
-#define MAX_SYMBOLS 100
+#define MAX_SYMBOLS 15 // this value is used by the symbol representation header and is bounded by the lenght of the symbols header field which is 4 bits long.
 #define SYMBOL_SIZE 8

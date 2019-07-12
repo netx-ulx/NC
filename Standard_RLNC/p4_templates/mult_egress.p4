@@ -109,10 +109,6 @@ control MyEgress(inout headers hdr,
         // and generates a coded symbol as the result
         // CONFIGURABLE: can change depending if we want to have more than one coded symbol per packet
         action action_code_symbol() {
-            // Loading symbols in metadata
-            // The number of symbols that need to be loaded is
-            // equal to GEN_SIZE. Meaning loading all the symbols from the following positions:
-            action_load_symbols(meta.clone_metadata.symbols_gen_head);
             // Coding and copying the symbols
             CODE_ALG_SYMBOL
             action_GF_arithmetic(??sN, rand_numM??);
@@ -150,6 +146,10 @@ control MyEgress(inout headers hdr,
                     packet_counter_egress.count(0);
                     // Generate the random coefficients
                     action_generate_random_coefficients();
+                    // Loading symbols in metadata
+                    // The number of symbols that need to be loaded is
+                    // equal to GEN_SIZE. Meaning loading all the symbols from the following positions:
+                    action_load_symbols(meta.clone_metadata.symbols_gen_head);
                     // Code the symbol with the generated random coefficients
                     action_code_symbol();
                     // Coding a packet

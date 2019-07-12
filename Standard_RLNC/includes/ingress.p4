@@ -70,6 +70,10 @@ control MyIngress(inout headers hdr,
             buf_coeffs.write(coeff_gen_offset + 1, hdr.coefficients[1].coef);
             buf_coeffs.write(coeff_gen_offset + 2, hdr.coefficients[2].coef);
             buf_coeffs.write(coeff_gen_offset + 3, hdr.coefficients[3].coef);
+            buf_coeffs.write(coeff_gen_offset + 4, hdr.coefficients[4].coef);
+            buf_coeffs.write(coeff_gen_offset + 5, hdr.coefficients[5].coef);
+            buf_coeffs.write(coeff_gen_offset + 6, hdr.coefficients[6].coef);
+            buf_coeffs.write(coeff_gen_offset + 7, hdr.coefficients[7].coef);
         }
 
         action my_drop() {

@@ -140,7 +140,7 @@ control MyEgress(inout headers hdr,
                     packets_sent_buffer.read(packets_sent, 0);
                     packets_sent = packets_sent + 1;
                     if(packets_sent >= meta.clone_metadata.n_packets_out) {
-                        //action_free_buffer();
+                        action_free_buffer();
                         packets_sent_buffer.write(0,0);
                     }else {
                         packets_sent_buffer.write(0, packets_sent);
