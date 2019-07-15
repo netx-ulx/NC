@@ -70,7 +70,7 @@ control MyIngress(inout headers hdr,
         }
 
         action my_drop() {
-            mark_to_drop();
+            mark_to_drop(standard_metadata);
         }
 
         action action_enable_rlnc(bit rlnc_enable) {
@@ -143,6 +143,7 @@ control MyIngress(inout headers hdr,
                         symbol_slots_reserved_buffer.write(0, symbols_reserved_slots + gen_size);
                     }
 
+
                     // Using the generation index to save to the registers the packet symbols
                     action_buffer_symbols();
 
@@ -187,8 +188,8 @@ control MyIngress(inout headers hdr,
 
 				} // end of first IF on the rlnc.type
 
-                // Coding iff num of stored symbols for the current generation is  equal to or greater than generation size
-                if((symbols_gen_offset-symbols_gen_head >= gen_size)) {
+                // Coding iff num of stored symbols for the current generation is  equal to the generation size
+                if((symbols_gen_offset-symbols_gen_head == gen_size)) {
 
 					// enable coding in egress
                     meta.clone_metadata.coding_flag =  1;
