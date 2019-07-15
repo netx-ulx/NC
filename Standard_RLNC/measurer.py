@@ -113,8 +113,8 @@ def avg_of_all_tests():
     print ""
     data.append(avg_pps_all_tests)
     data.append(avg_cpu_all_tests)
-    data.append(avg_packets_received)
     data.append(round(std_dev,2))
+    data.append(avg_packets_lost)
     save_data()
 
 def handle_pkt_2(pkt, number_of_packets, pps):

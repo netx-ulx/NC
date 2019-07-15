@@ -100,7 +100,7 @@ def send_systematic_packets(number_of_packets, number_of_symbols, gen_size, fiel
         pkt = pkt / P4RLNC(Gen_Size=gen_size, Type=1, Symbol_Size=field_size, Field_Size=field_size, Symbols=number_of_symbols, symbols_vector=tmp_symbols_vector)
         sendp(pkt, iface=iface, verbose=False)
 
-    print "ORIGINAL SYMBOLS"
+    print "=======ORIGINAL SYMBOLS======="
     print original_symbols
 
 def send_coded_packets(number_of_packets, number_of_symbols, gen_size, field_size,iface):
@@ -122,7 +122,7 @@ def send_coded_packets(number_of_packets, number_of_symbols, gen_size, field_siz
         pkt = pkt / P4RLNC(Gen_Size=gen_size, Type=3, Symbol_Size=field_size, Field_Size=field_size, Symbols=number_of_symbols, Encoder_Rank=gen_size,coefficient_vector=tmp_coeffs_vector,symbols_vector=tmp_symbols_vector)
         sendp(pkt, iface=iface, verbose=False)
         pkt.show2()
-    print "ORIGINAL SYMBOLS"
+    print "=======ORIGINAL SYMBOLS======="
     print original_symbols
 
 
