@@ -145,6 +145,7 @@ def main():
     data.append(field_size)
     data.append(gen_size)
     data.append(number_of_symbols)
+    data.append(pps)
     sys.stdout.flush()
     t2 = threading.Thread(target=avg_of_all_tests)
     t2.daemon = True
