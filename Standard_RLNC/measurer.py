@@ -104,6 +104,8 @@ def avg_of_all_tests():
     avg_cpu_all_tests = round(reduce(lambda x, y: x + y, final_cpu_usage_list) / len(final_cpu_usage_list))
     avg_packets_lost = round(reduce(lambda x, y: x + y, final_packets_received_list) / len(final_packets_received_list))
     std_dev = np.std(np.array(final_pkt_rate_list))
+    std_dev_cpu = np.std(np.array(final_cpu_usage_list))
+    std_dev_loss = np.std(np.array(final_packets_received_list))
     print ""
     print "============== FINAL RESULTS OF ALL TESTS =============="
     print "AVERAGE PPS: " + str(avg_pps_all_tests)
@@ -115,6 +117,8 @@ def avg_of_all_tests():
     data.append(avg_cpu_all_tests)
     data.append(round(std_dev,2))
     data.append(avg_packets_lost)
+    data.append(round(std_dev_cpu,2))
+    data.append(round(std_dev_cpu,2))
     save_data()
 
 def handle_pkt_2(pkt, number_of_packets, pps):
@@ -136,9 +140,7 @@ def handle_pkt_2(pkt, number_of_packets, pps):
             packets_received += 1
 
 def main():
-    global coefficient_matrix_s1
     global data
-    ifaces = filter(lambda i: 'veth' in i, os.listdir('/sys/class/net/'))
     iface = "veth3"
     mul, gen_size, number_of_symbols, field_size, number_of_packets, pps = parser.get_receiver_args()
     data.append(mul)
