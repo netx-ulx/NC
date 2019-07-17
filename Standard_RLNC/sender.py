@@ -129,8 +129,6 @@ def send_coded_packets(number_of_packets, number_of_symbols, gen_size, field_siz
 def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen_size, field_size, iface, pps):
     """ Sends n packets per second. It takes the number of packets and divides them into generations and symbols and then sends n packets """
     """ It sends a batch of the same packets as many times as we want to repeat the experiment """
-    number_of_packets_sent = 0
-    total_generations = number_of_packets/gen_size
     pkt_list = []
     original_symbols = generate_symbols(gen_size)
     symbols_vector = original_symbols.GetColumn(0)
@@ -157,6 +155,43 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
         # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
         time.sleep((number_of_packets/pps) + 8)
 
+def send_coded_packets_per_second(number_of_packets, number_of_symbols, gen_size, field_size, iface, pps):
+    """ Sends coded symbols to the receiver, packets with coded symbols have a type equal to 3 and each symbol is accompannied by its coefficient vector """
+    pkt_list = []
+    g = 0
+    original_symbols = generate_symbols(gen_size)
+    coeffs = generate_coefficients(gen_size)
+    tmp = []
+    coded_symbols = code_symbols(original_symbols, coeffs)
+    symbols_vector = coded_symbols.GetColumn(0)
+    for i in range(0, gen_size):
+        tmp.append(coeffs.GetRow(i))
+    coeffs_vector = flat_list(tmp)
+    for i in range(1,number_of_packets+1):
+        tmp_symbols_vector = symbols_vector[:number_of_symbols]
+        del symbols_vector[:number_of_symbols]
+        tmp_coeffs_vector = coeffs_vector[:number_of_symbols*gen_size]
+        del coeffs_vector[:number_of_symbols*gen_size]
+        pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
+        pkt = pkt / P4RLNC(Gen_ID=g,Gen_Size=gen_size, Type=3, Symbol_Size=field_size, Field_Size=field_size, Symbols=number_of_symbols, Encoder_Rank=gen_size,coefficient_vector=tmp_coeffs_vector,symbols_vector=tmp_symbols_vector)
+        pkt_list.append(pkt)
+        if (i % (gen_size/number_of_symbols)) == 0:
+            g += 1
+            original_symbols = generate_symbols(gen_size)
+            coeffs = generate_coefficients(gen_size)
+            tmp = []
+            coded_symbols = code_symbols(original_symbols, coeffs)
+            symbols_vector = coded_symbols.GetColumn(0)
+            for i in range(0, gen_size):
+                tmp.append(coeffs.GetRow(i))
+            coeffs_vector = flat_list(tmp)
+    while(i < 10):
+        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10, file_cache=True, parse_results=True)
+        print "Packets sent per second: " + str(pps)
+        i += 1
+        # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
+        time.sleep((number_of_packets/pps) + 8)
+
 
 def main():
     global MAX_SYMBOL_VALUE
@@ -172,7 +207,7 @@ def main():
     if type == 1:
         send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen_size, field_size, iface, pps)
     elif type == 3:
-        send_coded_packets(number_of_packets, number_of_symbols, gen_size, field_size, iface)
+        send_coded_packets_per_second(number_of_packets, number_of_symbols, gen_size, field_size, iface, pps)
 
 
 if __name__ == '__main__':
