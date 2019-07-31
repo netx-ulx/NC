@@ -24,8 +24,6 @@ control MyEgress(inout headers hdr,
         // CONFIGURABLE: changes depending on the generation size and the number of symbols
         $bit<GF_BYTES> rand_numN = 0;
 
-
-        bit<8> numb_of_symbols = (bit<8>) hdr.rlnc_in.symbols;
         bit<32> gen_size = (bit<32>) hdr.rlnc_out.gen_size;
         register<bit<8>>(1) packets_sent_buffer;
         bit<8> packets_sent = 0;

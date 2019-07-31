@@ -70,7 +70,7 @@ control MyIngress(inout headers hdr,
         }
 
         action my_drop() {
-            mark_to_drop(standard_metadata);
+            mark_to_drop();
         }
 
         action action_enable_rlnc(bit rlnc_enable) {
@@ -190,7 +190,7 @@ control MyIngress(inout headers hdr,
 
                 // Coding iff num of stored symbols for the current generation is  equal to the generation size
                 if((symbols_gen_offset-symbols_gen_head == gen_size)) {
-
+                    packet_counter_ingress_2.count(0);
 					// enable coding in egress
                     meta.clone_metadata.coding_flag =  1;
 
@@ -201,7 +201,7 @@ control MyIngress(inout headers hdr,
                     // activate multicast here to generate packets holding different linear combinations in egress
                     table_clone.apply();
                 }
-                packet_counter_ingress_2.count(0);
+
             }
         }
 }

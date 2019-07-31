@@ -14,6 +14,7 @@
 @
 //The maximum size of the buffer that store the packets contents
 #define MAX_BUF_SIZE 1024
+#define MAX_NUMBER_OF_GENERATIONS 1000
 
 const bit<16>  TYPE_RLNC = 0x0809;
 const bit<16>  TYPE_ACK = 0x0899;

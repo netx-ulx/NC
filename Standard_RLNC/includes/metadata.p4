@@ -9,7 +9,7 @@ struct clone_metadata_t {
 struct metadata {
     clone_metadata_t        clone_metadata;
     bit<16> coeffs;
-	bit<6> symbols;
+	bit<4> symbols;
 	bit<32> tmp;
     bit rlnc_enable;
 }
