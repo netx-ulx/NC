@@ -28,7 +28,8 @@ header Rlnc_in_t{
 	bit<2> type;
 	// The correct bit width of the symbols field should in fact be 4, however, BMv2 target only supports headers with fields totaling a multiple of 8 bits.
 	// Therefore we give it a bit width of 6.
-	bit<6> symbols;
+	bit<4> symbols;
+	bit<2> padding;
 	byte_t encoderRank;
 }
 
