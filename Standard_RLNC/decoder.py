@@ -63,23 +63,27 @@ def set_finite_field(field_size):
         AND = lambda x,y: F.Multiply(int(x),int(y))
         DIV = lambda x,y: F.Divide(int(x),int(y))
 
-def print_matrices(coefficient_matrix_s1, payload_matrix):
+def print_matrices(coefficient_matrix_s1, payload_matrix, original_symbols):
     """ Prints the coefficient matrix and the encoded symbols matrix """
     print "=======RANDOM COEFFICIENT MATRIX======="
     print coefficient_matrix_s1
-    print "=======ENCODED_SYMBOLS======="
-    print payload_matrix
+    print "=======ENCODED SYMBOLS======="
+    encoded_symbols_matrix = genericmatrix.GenericMatrix((8,1),add=XOR,mul=AND,sub=XOR,div=DIV)
+    #for i in range(0, 8):
+        #encoded_symbols_matrix.SetRow(i, payload_matrix[i])
+    #print encoded_symbols_matrix
+    print "=======ORIGINAL SYMBOLS======="
+    print original_symbols
 
 def decode(payload_matrix, coefficient_matrix_s1, gen_size):
     """ Decodes the encoded symbols using the coefficient matrix """
     set_finite_field
     b = column(payload_matrix,0)
-    print b
     solve1 = coefficient_matrix_s1.Solve(b)
     original_symbols_matrix = genericmatrix.GenericMatrix((gen_size,1),add=XOR,mul=AND,sub=XOR,div=DIV)
     for i in range(0, gen_size):
         original_symbols_matrix.SetRow(i, [solve1[i]])
-    print original_symbols_matrix
+    print_matrices(coefficient_matrix_s1, payload_matrix, original_symbols_matrix)
 
 def reset(gen_size):
     global coeff_rows
@@ -98,7 +102,6 @@ def handle_pkt(pkt, gen_size, symbols):
             print "got a packet"
             coded_symbol = (pkt.getlayer(P4RLNC).symbols_vector)
             coeff_vector = (pkt.getlayer(P4RLNC).coefficient_vector)
-            pkt.show2()
             for i in range(0, symbols):
                 tmp_coeff_vector = coeff_vector[:gen_size]
                 del coeff_vector[:gen_size]
@@ -114,7 +117,7 @@ def handle_pkt(pkt, gen_size, symbols):
 def main():
     global coefficient_matrix_s1
     ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
-    iface = "veth3"
+    iface = "h2-eth0"
     _, gen_size, number_of_symbols, field_size, _, _ = parser.get_receiver_args()
     print iface
     set_finite_field(field_size)

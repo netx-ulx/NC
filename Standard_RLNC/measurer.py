@@ -118,7 +118,7 @@ def avg_of_all_tests():
     data.append(round(std_dev,2))
     data.append(avg_packets_lost)
     data.append(round(std_dev_cpu,2))
-    data.append(round(std_dev_cpu,2))
+    data.append(round(std_dev_loss,2))
     save_data()
 
 def handle_pkt_2(pkt, number_of_packets, pps):

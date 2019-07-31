@@ -149,7 +149,8 @@ def send_systematic_packets_per_second(number_of_packets, number_of_symbols, gen
     i = 0
     # Sends the same batch of packets multiple times
     while(i < 10):
-        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10, file_cache=True)
+        print len(pkt_list)
+        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10)
         print "Packets sent per second: " + str(pps)
         i += 1
         # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
@@ -185,8 +186,10 @@ def send_coded_packets_per_second(number_of_packets, number_of_symbols, gen_size
             for i in range(0, gen_size):
                 tmp.append(coeffs.GetRow(i))
             coeffs_vector = flat_list(tmp)
+    i = 0
     while(i < 10):
-        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10, file_cache=True, parse_results=True)
+        print len(pkt_list)
+        print sendpfast(pkt_list, iface=iface, pps=pps, loop=10)
         print "Packets sent per second: " + str(pps)
         i += 1
         # Sleeps to give time for the destination host to receive all the sent packets, especially for the case where the processing speed is low
